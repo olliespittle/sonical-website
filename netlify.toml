@@ -1,4 +1,6 @@
 [build]
-  # Static site — no build step. This overrides the old Astro build config.
-  command = "echo 'no build needed — static site'"
-  publish = "."
+  command = "astro build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

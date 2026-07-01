@@ -1,0 +1,85 @@
+backend:
+  name: github
+  repo: olliespittle/sonical-website
+  branch: main
+  commit_messages:
+    create: 'Newsroom: add {{collection}} "{{slug}}"'
+    update: 'Newsroom: update {{collection}} "{{slug}}"'
+    delete: 'Newsroom: delete {{collection}} "{{slug}}"'
+    uploadMedia: 'Newsroom: upload {{path}}'
+    deleteMedia: 'Newsroom: delete {{path}}'
+
+# Lets you preview the CMS locally without GitHub auth:
+#   1) in newsroom-astro/: npx decap-server
+#   2) load http://localhost:4321/admin/  (dev server) — edits write to local files
+local_backend: true
+
+# Uploaded images live in the repo at public/news and are referenced as /news/...
+media_folder: 'public/news'
+public_folder: '/news'
+
+collections:
+  - name: 'press'
+    label: 'In the press'
+    label_singular: 'Press story'
+    description: 'External coverage. Each entry links out to the original article.'
+    folder: 'src/content/press'
+    create: true
+    slug: '{{slug}}'
+    identifier_field: title
+    summary: '{{title}}  ·  {{source}}  ·  {{date}}'
+    sortable_fields: ['date', 'title', 'source']
+    view_filters:
+      - { label: 'Headphone 3.0', field: category, pattern: 'Headphone 3.0' }
+      - { label: 'Remora', field: category, pattern: 'Remora' }
+      - { label: 'Partnerships', field: category, pattern: 'Partnerships' }
+    fields:
+      - { name: title, label: 'Headline', widget: string }
+      - {
+          name: date,
+          label: 'Date',
+          widget: datetime,
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+          picker_utc: true,
+        }
+      - { name: source, label: 'Source (outlet)', widget: string, hint: "The publication, e.g. audioXpress or Music Ally" }
+      - {
+          name: url,
+          label: 'Article URL',
+          widget: string,
+          hint: 'Full link to the original article',
+          pattern: ['^https?://', 'Must start with http:// or https://'],
+        }
+      - {
+          name: category,
+          label: 'Category',
+          widget: select,
+          options: ['Headphone 3.0', 'Remora', 'Partnerships'],
+          default: 'Partnerships',
+        }
+      - { name: image, label: 'Image', widget: image, hint: 'Landscape works best (16:9)' }
+
+  - name: 'posts'
+    label: 'From Sonical'
+    label_singular: 'Post'
+    description: 'Your own posts and press releases. These publish as hosted articles.'
+    folder: 'src/content/posts'
+    create: true
+    slug: '{{slug}}'
+    identifier_field: title
+    summary: '{{title}}  ·  {{date}}'
+    sortable_fields: ['date', 'title']
+    fields:
+      - { name: title, label: 'Title', widget: string }
+      - {
+          name: date,
+          label: 'Date',
+          widget: datetime,
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+          picker_utc: true,
+        }
+      - { name: excerpt, label: 'Excerpt', widget: text, required: false, hint: 'One or two lines shown on the newsroom card' }
+      - { name: image, label: 'Hero image', widget: image, required: false }
+      - { name: body, label: 'Body', widget: markdown }
