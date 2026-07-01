@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  SONICAL — HOMEPAGE PROTOTYPE · v3 (EMBER + v2 COPY)
+  Built 12 June 2026. Changes from v2 prototype:
+
+  - Palette: Ember (Gary's pick) — orange #FF9E00 text accents,
+    violet #C084FC graphics, warm-black base #0C0708.
+    Button gradient #A855F7 → #FF8A00, compressed to middle 50%.
+  - Real copy poured in from "Sonical Homepage Copy — v2" (Notion).
+    Remaining placeholders are marked with dashed chips:
+    video, testimonials, flywheel diagram, partner logos.
+    Form is a non-functional mock.
+  - Main page now carries all 9 copy sections.
+
+  v3.1 (12 June 2026):
+  - Cloud → phone → ear animation wired into Section 1 as a
+    full-width band (ported from the standalone mockup v4);
+    its install tray doubles as the 9-app list from the copy.
+    First cycle full pace, later rounds ~15% quicker (Gary).
+  - main{scroll-snap-stop:always} so a hard fling from card 3
+    clicks in at the top of the scrolling page instead of
+    sailing past sections 1–2 (Ollie).
+
+  Scroll mechanics otherwise unchanged from v2 (snap cards →
+  normal scroll). Debug hooks (__update/__force/#f=/__animSeek)
+  still in — strip for production.
+  ============================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Sonical builds CosmOS, the operating system for the ears. Install apps on any audio device and change what it does years after you bought it — Headphone 3.0.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sonical — A universe of apps for your ears">
+<meta property="og:description" content="CosmOS turns any audio device into a computer for your ears. One OS, every audio device.">
+<meta property="og:url" content="https://sonical.ai/">
+<title>Sonical — A universe of apps for your ears</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0c0708;
+    --ink:#fbf3ea;
+    --muted:#d3c2b4;
+    --faint:#9c8878;
+    /* two-role accent system — Ember: orange = text, violet = graphics */
+    --text-acc:#ff9e00;
+    --graph-acc:#c084fc;
+    --graph-line:rgba(192,132,252,.3);
+    --graph-soft:rgba(192,132,252,.1);
+    /* button: solid → gradient in middle 50% → solid */
+    --btn-grad:linear-gradient(90deg,#a855f7 0%,#a855f7 25%,#ff8a00 75%,#ff8a00 100%);
+    /* card tint standardized at .79; hue warmed to sit on the Ember base */
+    --glass:rgba(31,18,12,.79);
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-snap-type:y mandatory}
+  html.flat{scroll-snap-type:none}
+  body{
+    background:var(--bg-0);color:var(--ink);
+    font-family:var(--font-body);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  ::selection{background:rgba(192,132,252,.35)}
+
+  /* ============ Fixed backdrop (persists behind everything) ============ */
+  #starfield{position:fixed;inset:0;z-index:0}
+  .nebula{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(60% 50% at 78% -8%, rgba(124,45,18,.55), transparent 62%),
+      radial-gradient(46% 40% at 10% 64%, rgba(255,158,0,.14), transparent 60%),
+      radial-gradient(72% 60% at 50% 112%, rgba(107,33,168,.55), transparent 65%);
+    filter:hue-rotate(var(--neb-hue,0deg)) saturate(var(--neb-sat,1.1));
+    will-change:filter;
+  }
+
+  /* ============ Card phase: 3 snap stops, cards render in fixed stage ============ */
+  #track{position:relative;z-index:1}
+  .snap-stop{height:100vh;scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}
+  #cardStage{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+  .card{
+    position:absolute;left:50%;top:50%;
+    width:min(94vw,1060px);
+    transform:translate(-50%,-50%);
+    will-change:transform,opacity,filter;
+    opacity:0;pointer-events:none;
+  }
+  .card.live{pointer-events:auto}
+  /* frost intentionally OFF: an opaque panel instead of backdrop-blur — the blur over the
+     animating starfield was the main scroll-lag source (Ollie tested F-toggle, 2026-06-19) */
+  .panel{
+    background:rgba(14,9,10,.9);
+    border:1px solid var(--graph-line);
+    border-radius:28px;
+    padding:clamp(28px,5vw,60px);
+    box-shadow:0 30px 90px rgba(4,2,1,.7), inset 0 0 70px rgba(192,132,252,.04);
+  }
+  .card .panel{max-height:84vh;overflow:hidden}
+
+  /* eyebrow labels: bigger + violet (Ollie 2026-06-13 — bring more purple in) */
+  .eyebrow{
+    font-family:var(--font-display);font-size:15px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--graph-acc);
+    display:inline-flex;align-items:center;gap:11px;margin-bottom:16px;
+  }
+  .eyebrow::before{content:"";width:28px;height:2px;background:var(--graph-acc)}
+  h2{
+    font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.06;
+    font-size:clamp(30px,5.2vw,56px);margin-bottom:16px;
+  }
+  .acc{color:var(--text-acc)}
+  .lede{color:var(--muted);font-size:clamp(15px,1.6vw,19px);max-width:62ch}
+  .sub{color:var(--faint);font-size:clamp(13px,1.3vw,15.5px);max-width:62ch;margin-top:10px}
+  .kicker{
+    font-family:var(--font-display);font-style:italic;color:var(--ink);
+    font-size:clamp(15px,1.7vw,19px);margin-top:22px;
+  }
+  .ph{
+    display:inline-block;font-family:var(--font-display);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--faint);border:1px dashed var(--graph-line);
+    border-radius:99px;padding:3px 10px;margin-top:18px;
+  }
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .pill{
+    font-size:12px;font-family:var(--font-display);font-weight:500;letter-spacing:.04em;
+    color:#f3e4d4;background:var(--graph-soft);border:1px solid var(--graph-line);
+    padding:6px 14px;border-radius:999px;
+  }
+  .pill b{color:var(--text-acc);font-weight:600}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--font-display);font-weight:600;font-size:15px;
+    padding:13px 28px;border-radius:999px;text-decoration:none;cursor:pointer;border:0;
+    transition:transform .25s ease,box-shadow .25s ease;
+  }
+  .btn-primary{background:var(--btn-grad);color:#140a04}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(255,138,0,.3)}
+  .btn-ghost{background:none;border:1px solid var(--graph-line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--graph-acc);transform:translateY(-2px)}
+  .ctarow{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px;align-items:center}
+
+  /* stat chips (problem card) */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:22px}
+  .stat{
+    border:1px solid var(--graph-line);border-radius:14px;padding:13px 16px;
+    background:var(--graph-soft);
+  }
+  .stat b{font-family:var(--font-display);font-size:24px;color:var(--text-acc);display:block;line-height:1.1}
+  .stat span{font-size:12.5px;color:var(--muted);display:block;margin-top:3px}
+  .stat i{font-size:10.5px;color:var(--faint);font-style:normal;display:block;margin-top:5px}
+
+  /* ============ Normal scrolling phase: one giant frosted card ============ */
+  main{
+    position:relative;z-index:2;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;   /* a hard fling from card 3 clicks in at the top of the page instead of sailing past section 1 */
+    /* footer lives INSIDE main (below .mega) so it's part of this oversized snap area —
+       the snap keeps main covering the viewport, so the bottom settles ON the footer
+       instead of trapping it (which happened when the footer was a sibling after main). */
+    padding:72px 0 0;          /* first section sits just below the 64px nav; footer carries its own bottom padding */
+  }
+  .mega{
+    width:min(97vw,1320px);margin:0 auto;
+    background:var(--glass);
+    border-radius:40px;
+    padding:clamp(22px,3vw,40px) clamp(26px,6vw,96px) clamp(30px,5vw,76px);
+    mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+  }
+  .sect{
+    margin:0 0 clamp(56px,8vw,96px);
+    scroll-margin-top:90px;
+  }
+  .sect:last-child{margin-bottom:0}
+  .sect h2{font-size:clamp(26px,3.6vw,42px)}
+  .cols{display:grid;gap:30px;align-items:center}
+  @media(min-width:920px){.cols{grid-template-columns:1fr 1fr;gap:48px}}
+  .fr{opacity:.2;transform:translateY(34px);filter:brightness(.6) saturate(.7);
+      transition:opacity .8s ease,transform .8s ease,filter .8s ease}
+  .fr.in{opacity:1;transform:none;filter:none}
+
+  .deep{
+    display:inline-block;margin-top:18px;font-family:var(--font-display);font-size:13.5px;
+    color:var(--graph-acc);text-decoration:none;border-bottom:1px dashed var(--graph-line);
+  }
+  .deep:hover{color:var(--ink)}
+
+  /* ============ How-it-works animation (full-width band) ============ */
+  .anim-stage{position:relative;margin-top:14px;user-select:none}
+  .anim-stage svg{display:block;width:100%;height:auto}
+  .anim-stage .line-path{stroke:var(--graph-acc);stroke-opacity:.35;stroke-width:1.5;stroke-dasharray:3 7;fill:none;animation:dashflow 1.4s linear infinite}
+  @keyframes dashflow{to{stroke-dashoffset:-10}}
+  .anim-stage .cloud-body{fill:rgba(192,132,252,.08);stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:1.5}
+  .anim-stage .cloud-dot{fill:var(--graph-acc);opacity:.5}
+  .anim-stage .lbl{font-family:var(--font-display);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  .anim-stage .step text{fill:var(--faint);transition:fill .5s ease}
+  .anim-stage .step.done text{fill:var(--text-acc)}
+  .anim-stage .phone-body{fill:#160d09;stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:1.5}
+  .anim-stage .phone-screen{fill:rgba(192,132,252,.07)}
+  .anim-stage .phone-notch{fill:rgba(192,132,252,.35)}
+  .anim-stage .dl-bar-track{fill:rgba(192,132,252,.15)}
+  .anim-stage .dl-bar{fill:var(--text-acc)}
+  .anim-stage .bud-body{fill:#160d09;stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:1.5}
+  .anim-stage .bud-mic{fill:rgba(192,132,252,.4)}
+  .anim-stage .app-dot{opacity:0;transition:opacity .5s ease}
+  .anim-stage .app-dot.on{opacity:.95}
+  .anim-stage .ring{stroke:var(--text-acc);fill:none;opacity:0;transform-origin:center;transform-box:fill-box}
+  .anim-stage .bud-lit .ring{animation:ringout 1.1s ease-out}
+  .anim-stage .bud-lit .ring.r2{animation-delay:.18s}
+  @keyframes ringout{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.6)}}
+  .traveler{
+    position:absolute;left:0;top:0;width:52px;height:52px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;opacity:0;
+    box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 18px rgba(255,158,0,.25);
+    will-change:transform,opacity;pointer-events:none;
+  }
+  .traveler svg{width:30px;height:30px;display:block}
+  .bg-0{background:linear-gradient(135deg,#a855f7,#6b21a8)}
+  .bg-1{background:linear-gradient(135deg,#ff9e00,#c2410c)}
+  .bg-2{background:linear-gradient(135deg,#7c3aed,#db2777)}
+  .bg-3{background:linear-gradient(135deg,#f59e0b,#a855f7)}
+  .bg-4{background:linear-gradient(135deg,#9333ea,#ff8a00)}
+  .bg-5{background:linear-gradient(135deg,#fb923c,#a855f7)}
+  .bg-6{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+  .bg-7{background:linear-gradient(135deg,#f59e0b,#7c3aed)}
+  .bg-8{background:linear-gradient(135deg,#d946ef,#ff8a00)}
+  /* app title — the most important label; bigger than the stage text (Ollie 2026-06-13) */
+  /* app names are the headline of the whole CosmOS premise — keep them big + attention-grabbing (Ollie 2026-06-13) */
+  .anim-caption{text-align:center;color:var(--muted);font-size:clamp(24px,3vw,36px);margin-top:8px;min-height:40px;font-family:var(--font-display)}
+  .anim-caption b{color:var(--text-acc);font-weight:700}
+  .anim-tray-title{
+    text-align:center;font-family:var(--font-display);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--faint);margin-top:14px;
+  }
+  .anim-tray{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:10px;min-height:42px}
+  .chip{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:.02em;
+    color:#f3e4d4;background:var(--graph-soft);border:1px solid var(--graph-line);
+    padding:8px 16px;border-radius:999px;
+    opacity:.35;transform:translateY(0) scale(1);
+    transition:opacity .45s ease,transform .45s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .chip.on{opacity:1}
+  .chip .ic{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}
+  .chip .ic svg{width:13px;height:13px}
+  body.flat .anim-stage .line-path,body.flat .anim-stage .bud-lit .ring{animation:none}
+
+  /* animation / video / diagram placeholders */
+  .media-ph{
+    border:1px dashed var(--graph-line);border-radius:20px;background:var(--graph-soft);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    color:var(--faint);font-family:var(--font-display);font-size:12.5px;
+    letter-spacing:.12em;text-transform:uppercase;line-height:1.8;
+    min-height:220px;padding:20px;
+  }
+  .media-ph.wide{aspect-ratio:16/9;min-height:0;width:100%}
+  .media-ph.video-soon{
+    border-style:solid;flex-direction:column;gap:18px;color:var(--muted);font-size:13px;
+    background:linear-gradient(135deg,rgba(192,132,252,.10),rgba(255,158,0,.06));
+  }
+  .play-badge{
+    width:66px;height:66px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--graph-soft);border:1px solid var(--graph-line);
+  }
+  .play-badge svg{width:26px;height:26px;fill:var(--text-acc)}
+
+  /* legend cards: stacked beside the diagram */
+  .flywheel{display:grid;grid-template-columns:1fr;gap:12px}
+  .fly-cell{
+    border:1px solid var(--graph-line);border-radius:14px;padding:15px 16px;
+    background:var(--graph-soft);
+  }
+  .fly-cell b{font-family:var(--font-display);font-size:15px;display:block;color:var(--text-acc)}
+  .fly-cell span{font-size:13px;color:var(--muted)}
+
+  /* ============ Ecosystem flywheel (animated diagram) ============ */
+  .fly-stage{position:relative;width:100%;max-width:560px;margin:0 auto;user-select:none}
+  .fly-stage svg{display:block;width:100%;height:auto;overflow:visible}
+  .fly-ring{fill:none;stroke:var(--graph-acc);stroke-opacity:.22;stroke-width:2;stroke-dasharray:3 9;animation:dashflow 1.6s linear infinite}
+  .fly-arc{fill:none;stroke:var(--text-acc);stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 9px rgba(255,158,0,.7))}
+  .fly-spoke{stroke:var(--graph-acc);stroke-opacity:.18;stroke-width:2;stroke-dasharray:3 9;transition:stroke .4s ease,stroke-opacity .4s ease}
+  .fly-spoke.active{stroke:var(--text-acc);stroke-opacity:.6}
+  .fly-node .icon-bg{fill:var(--graph-acc);transition:fill .35s ease,filter .35s ease}
+  .fly-node.near .icon-bg{fill:var(--text-acc);filter:drop-shadow(0 0 12px rgba(255,158,0,.8))}
+  .fly-node .glyph{fill:none;stroke:#160d09;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .fly-node .name{font-family:var(--font-display);font-size:21px;font-weight:600;fill:var(--muted);transition:fill .35s ease}
+  .fly-node.near .name{fill:var(--text-acc)}
+  .fly-node .pr{stroke:var(--text-acc);fill:none;stroke-width:2;opacity:0;transform-origin:center;transform-box:fill-box}
+  .fly-node.pulse .pr{animation:ringout 1.1s ease-out}
+  .fly-node.pulse .pr.pr2{animation-delay:.16s}
+  .fly-charge{fill:var(--text-acc);opacity:0;filter:drop-shadow(0 0 5px rgba(255,158,0,.8))}
+  .fly-hub-body{fill:#160d09;stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:2}
+  .fly-hub-glow{fill:none;stroke:var(--text-acc);stroke-opacity:.35;stroke-width:2;transform-origin:center;transform-box:fill-box;animation:hubbreath 3.4s ease-in-out infinite}
+  @keyframes hubbreath{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.1);opacity:.14}}
+  .fly-hub-name{font-family:var(--font-display);font-size:25px;font-weight:700;fill:var(--text-acc);text-anchor:middle}
+  .fly-hub-sub{font-family:var(--font-display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;fill:var(--faint);text-anchor:middle}
+  .fly-token .core{fill:var(--text-acc)}
+  .fly-token .halo{fill:var(--text-acc);opacity:.28}
+  .fly-token{filter:drop-shadow(0 0 11px rgba(255,158,0,.85))}
+  body.flat .fly-ring,body.flat .fly-hub-glow{animation:none}
+
+  .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+  .tile{
+    border:1px solid var(--graph-line);border-radius:14px;padding:16px 14px;
+    background:var(--graph-soft);
+  }
+  .tile b{font-family:var(--font-display);font-size:14px;display:block}
+  .tile span{font-size:12.5px;color:var(--faint)}
+
+  .usecases{display:grid;gap:14px;margin-top:24px}
+  @media(min-width:760px){.usecases{grid-template-columns:repeat(2,1fr)}}
+  .uc{
+    border:1px solid var(--graph-line);border-radius:16px;padding:20px;
+    background:var(--graph-soft);
+  }
+  .uc b{font-family:var(--font-display);font-size:15px;display:block;margin-bottom:6px;color:var(--text-acc)}
+  .uc p{font-size:13.5px;color:var(--muted)}
+
+  .quotes{display:grid;gap:14px;margin-top:22px}
+  @media(min-width:760px){.quotes{grid-template-columns:repeat(3,1fr)}}
+  .quote-ph{
+    border:1px dashed var(--graph-line);border-radius:16px;padding:18px;
+    color:var(--faint);font-size:13px;
+  }
+  .quote-ph b{font-family:var(--font-display);display:block;margin-top:10px;color:var(--muted);font-size:12.5px}
+
+  .miles{list-style:none;margin-top:20px;display:grid;gap:12px;max-width:760px}
+  .miles li{
+    padding-left:26px;position:relative;color:var(--muted);font-size:15px;
+  }
+  .miles li::before{
+    content:"";position:absolute;left:0;top:9px;width:10px;height:10px;border-radius:50%;
+    background:var(--graph-soft);border:1.5px solid var(--graph-acc);
+  }
+  .pull{
+    margin-top:30px;padding:20px 26px;border-left:3px solid var(--graph-acc);
+    font-family:var(--font-display);font-size:clamp(17px,2vw,21px);font-style:italic;color:var(--ink);
+    max-width:62ch;
+  }
+  .pull cite{display:block;font-size:13px;font-style:normal;color:var(--faint);margin-top:8px}
+
+  .pgroup{margin-top:26px}
+  .pgroup h3{
+    font-family:var(--font-display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--text-acc);margin-bottom:12px;
+  }
+  .plist{list-style:none;display:grid;gap:9px}
+  .plist li{font-size:14px;color:var(--muted)}
+  .plist b{color:var(--ink);font-family:var(--font-display);font-weight:600}
+  .prog{margin-top:26px;color:var(--muted);font-size:14.5px}
+  /* partner logo wall — even grid, each logo scaled to fit a shared box so wide
+     wordmarks (Renesas) and compact marks (IDUN) read at a similar size */
+  .logo-wall{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+    gap:30px 24px;align-items:center;justify-items:center;margin-top:18px;max-width:940px;
+  }
+  .logo-wall img{max-height:34px;max-width:116px;width:auto;height:auto;opacity:.95;transition:opacity .2s,transform .2s}
+  .logo-wall img:hover{opacity:1;transform:translateY(-2px)}
+  /* Golden Hearing ships as an icon-only mark — pair it with a wordmark so it's recognisable */
+  .logo-wall .logo-lockup{display:inline-flex;align-items:center;gap:7px;opacity:.95;transition:opacity .2s,transform .2s}
+  .logo-wall .logo-lockup:hover{opacity:1;transform:translateY(-2px)}
+  .logo-wall .logo-lockup img{max-height:32px;max-width:none;transform:none}
+  .logo-wall .logo-lockup img:hover{transform:none}
+  .logo-wall .logo-lockup .nm{display:flex;flex-direction:column;font-family:var(--font-display);font-weight:700;font-size:16px;line-height:1.04;color:var(--ink);letter-spacing:.01em}
+  @media(max-width:600px){.logo-wall{grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:24px 16px}.logo-wall img{max-height:28px;max-width:92px}}
+
+  .callout{
+    margin-top:28px;border:1px solid var(--graph-line);border-radius:18px;
+    padding:22px 26px;background:var(--graph-soft);max-width:780px;
+  }
+  .callout p{font-size:14.5px;color:var(--muted)}
+  .callout b{color:var(--text-acc)}
+  .callout a{color:var(--graph-acc)}
+
+  .form{display:grid;gap:12px;max-width:520px;margin-top:22px}
+  .form input,.form select{
+    background:var(--graph-soft);border:1px solid var(--graph-line);border-radius:12px;
+    padding:13px 16px;color:var(--ink);font:inherit;font-size:14.5px;width:100%;
+  }
+  .form select{appearance:none;color:var(--muted)}
+  .form ::placeholder{color:var(--faint)}
+  .quiz{
+    border:1px solid var(--graph-line);border-radius:12px;
+    background:var(--graph-soft);padding:14px 16px 16px;display:grid;gap:10px;
+  }
+  .quiz legend{font-size:14.5px;color:var(--ink);padding:0 6px}
+  .quiz legend span{color:var(--faint);font-size:12.5px}
+  .quiz label{
+    display:flex;align-items:center;gap:10px;font-size:14.5px;
+    color:var(--muted);cursor:pointer;
+  }
+  /* reason selectors styled like the right-rail section dots (ember fill + glow when on) */
+  .quiz input[type=checkbox]{
+    appearance:none;-webkit-appearance:none;
+    width:15px;height:15px;flex:none;padding:0;margin:0;border-radius:50%;
+    border:1px solid var(--graph-line);background:transparent;cursor:pointer;
+    transition:background .2s,border-color .2s,box-shadow .2s,transform .2s;
+  }
+  .quiz input[type=checkbox]:hover{border-color:var(--text-acc)}
+  .quiz input[type=checkbox]:checked{
+    background:var(--text-acc);border-color:var(--text-acc);
+    box-shadow:0 0 9px rgba(255,158,0,.65);transform:scale(1.18);
+  }
+  .quiz input[type=checkbox]:focus-visible{outline:2px solid var(--graph-acc);outline-offset:2px}
+  .form-status{font-size:14px;color:var(--muted);min-height:18px;margin-top:4px}
+  .form-status.ok{color:var(--text-acc);font-size:16.5px;font-weight:600}
+  .form-status.err{color:#ffb86b}
+
+  /* ============ Contact two-column + alien easter egg ============ */
+  .contact-row{display:grid;gap:30px;align-items:center;margin-top:22px}
+  @media(min-width:920px){.contact-row{grid-template-columns:1.05fr .95fr;gap:44px}}
+  .contact-aside{display:flex;align-items:center;justify-content:center}
+  .scene{width:min(300px,82%)}
+  .scene svg{display:block;width:100%;height:auto;overflow:visible}
+  .scene .body{fill:url(#alienGrad);stroke:#4c1d95;stroke-width:2}
+  .scene .belly{fill:#fff;opacity:.10}
+  .scene .foot{fill:url(#alienGrad);stroke:#4c1d95;stroke-width:2}
+  .scene .arm{fill:none;stroke:#9333ea;stroke-width:6.5;stroke-linecap:round}
+  .scene .eye-white{fill:#fbf3ea}
+  .scene .eye-pupil{fill:#241033}
+  .scene .eye-glint{fill:#fff}
+  .scene .mouth{fill:none;stroke:#3a1d52;stroke-width:2;stroke-linecap:round}
+  .scene .ant{fill:none;stroke:#a855f7;stroke-width:2.4;stroke-linecap:round}
+  .scene .ant-halo{fill:var(--text-acc);opacity:.25}
+  .scene .ant-bulb{fill:var(--text-acc)}
+  .scene .twk{fill:var(--ink)}
+  .scene .hp-band{fill:none;stroke:var(--text-acc);stroke-width:3;stroke-linecap:round}
+  .scene .hp-cup{fill:#ff9e00;stroke:#a85f00;stroke-width:1.4}
+  .scene .hp-cup-in{fill:#6b3b00}
+  .scene .wave{fill:none;stroke:var(--graph-acc);stroke-width:2.2;stroke-linecap:round}
+  .scene .note{fill:var(--text-acc)}
+  @keyframes groove{0%,100%{transform:translateY(2px) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
+  @keyframes wavep{0%{opacity:0;transform:scale(.5)}45%{opacity:.9}100%{opacity:0;transform:scale(1.5)}}
+  @keyframes notefloat{0%{opacity:0;transform:translateY(0) rotate(0)}25%{opacity:1}100%{opacity:0;transform:translateY(-50px) rotate(14deg)}}
+  @keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+  @keyframes sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+  .scene .groover{transform-box:fill-box;transform-origin:50% 90%;animation:groove .95s ease-in-out infinite}
+  .scene .g2{animation-delay:-.32s}
+  .scene .g3{animation-delay:-.62s}
+  .scene .wave{transform-box:fill-box;transform-origin:center;animation:wavep 1.8s ease-out infinite}
+  .scene .waves .w2{animation-delay:-.6s}
+  .scene .waves .w3{animation-delay:-1.2s}
+  .scene .note{transform-box:fill-box;transform-origin:center;animation:notefloat 3.2s ease-in infinite}
+  .scene .note.n2{animation-delay:-1.6s}
+  .scene .antleft,.scene .antright{transform-box:fill-box;transform-origin:50% 100%;animation:sway 2.3s ease-in-out infinite}
+  .scene .antright{animation-delay:-1.1s}
+  .scene .eye-lid{transform-box:fill-box;transform-origin:50% 0;animation:blink 5s ease-in-out infinite}
+  .scene .twk.t1{animation:twinkle 2.4s ease-in-out infinite}
+  .scene .twk.t2{animation:twinkle 2.9s ease-in-out infinite;animation-delay:-1s}
+  .scene .twk.t3{animation:twinkle 2.1s ease-in-out infinite;animation-delay:-.6s}
+  @media (prefers-reduced-motion: reduce){ .scene *{animation:none !important} }
+
+  footer{
+    position:relative;z-index:2;text-align:center;padding:36px 20px 50px;
+    color:var(--faint);font-size:13px;
+  }
+  footer .footer-logo{display:inline-block;margin-bottom:24px}
+  footer .footer-logo img{height:30px;width:auto;display:block;opacity:.92}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--graph-line)}
+  footer .frow{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-bottom:14px}
+  footer .proto{font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:18px}
+
+  /* ============ Nav — constant metrics so items never shift ============ */
+  .site-nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    background:rgba(12,7,8,.55);border-bottom:1px solid var(--graph-line);
+  }
+  .nav-inner{
+    max-width:1240px;margin:0 auto;padding:0 22px;height:64px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+  }
+  .logo{display:inline-flex;align-items:center;color:var(--ink);text-decoration:none}
+  .logo svg{height:28px;width:auto;display:block}
+  .nav-links{display:flex;align-items:center;gap:6px;list-style:none}
+  .nav-links a{
+    background:none;cursor:pointer;white-space:nowrap;text-decoration:none;
+    color:var(--muted);font-family:var(--font-display);font-size:13.5px;font-weight:500;
+    padding:8px 15px;border-radius:999px;
+    border:1px solid transparent;
+    transition:color .2s,border-color .2s,background .2s;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a.active{color:var(--text-acc);border-color:var(--graph-line);background:var(--graph-soft)}
+  @media(max-width:760px){.nav-links a{font-size:12px;padding:7px 11px}}
+
+  .dots{
+    position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:40;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  /* invisible capture strip so you only need to be NEAR the rail, not on a small dot */
+  .dots::before{content:"";position:absolute;top:-44px;bottom:-44px;right:-22px;left:-170px}
+  .dots .dot{
+    position:relative;width:11px;height:11px;border-radius:50%;border:1px solid var(--graph-line);
+    background:transparent;cursor:pointer;padding:0;transition:background .25s,transform .25s,border-color .25s,box-shadow .25s;
+  }
+  /* active dot: ember fill + glow so the rail catches the eye */
+  .dots .dot.active{background:var(--text-acc);border-color:var(--text-acc);transform:scale(1.3);box-shadow:0 0 9px rgba(255,158,0,.65)}
+  .dots .dot:hover{border-color:var(--text-acc)}
+  /* labels — theme-tinted: current/focused = ember orange, context items = violet */
+  .dot-label{
+    position:absolute;right:22px;top:50%;transform:translateY(-50%) translateX(6px);
+    white-space:nowrap;pointer-events:none;
+    font-family:var(--font-display);font-weight:600;letter-spacing:.01em;font-size:13px;
+    color:var(--text-acc);background:transparent;border:1px solid transparent;border-radius:7px;padding:3px 9px;
+    opacity:0;transition:opacity .18s,transform .18s,font-size .18s,color .18s;
+  }
+  /* persistent: the CURRENT section name always sits by its dot (small) so the rail
+     reads as navigation before you even hover (Ollie 2026-06-19) */
+  .dots:not(.peek) .dot.active .dot-label{
+    opacity:.92;transform:translateY(-50%) translateX(0);font-size:11px;color:var(--text-acc);
+    background:rgba(12,7,8,.82);border-color:var(--graph-line);
+  }
+  /* focus + context menu: hovering NEAR the rail reveals the nearest section name
+     (orange pill) plus the two above and below in smaller violet text — a little
+     scrolling menu that tracks the cursor (Ollie 2026-06-19) */
+  .dots.peek .dot.near0 .dot-label{
+    opacity:1;transform:translateY(-50%) translateX(0);font-size:13px;color:var(--text-acc);
+    background:rgba(12,7,8,.9);border-color:var(--graph-line);
+  }
+  .dots.peek .dot.near1 .dot-label{opacity:.8;transform:translateY(-50%) translateX(0);font-size:11px;color:var(--graph-acc)}
+  .dots.peek .dot.near2 .dot-label{opacity:.5;transform:translateY(-50%) translateX(0);font-size:10px;color:var(--graph-acc)}
+  /* visible labels are clickable too (the click bubbles to the dot's button) */
+  .dots:not(.peek) .dot.active .dot-label,
+  .dots.peek .dot.near0 .dot-label,
+  .dots.peek .dot.near1 .dot-label,
+  .dots.peek .dot.near2 .dot-label{pointer-events:auto;cursor:pointer}
+  /* keyboard focus still reveals a single label */
+  .dots .dot:focus-visible .dot-label{opacity:1;transform:translateY(-50%) translateX(0);color:var(--text-acc);background:rgba(12,7,8,.9);border-color:var(--graph-line)}
+  @media(max-width:720px){.dots{display:none}}
+
+  .demo-tag{
+    position:fixed;left:18px;bottom:16px;z-index:40;
+    font-family:var(--font-display);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--faint);
+  }
+  .scroll-hint{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:40;
+    font-family:var(--font-display);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);
+    transition:opacity .6s;
+  }
+
+  /* ============ Reduced-motion fallback: flat page ============ */
+  body.flat #track,body.flat .scroll-hint,body.flat .dots{display:none}
+  body.flat #cardStage{position:relative;inset:auto;padding:110px 0 0}
+  body.flat .card{
+    position:relative;left:auto;top:auto;transform:none;opacity:1;pointer-events:auto;
+    width:min(92vw,880px);margin:0 auto 50px;
+  }
+  body.flat .card .panel{max-height:none}
+  body.flat .fr{opacity:1;transform:none;filter:none}
+  /* ====== Headphone 1.0 → 2.0 → 3.0 arc strip (Problem card) ====== */
+  .arc-stage{position:relative;width:100%;max-width:800px;margin:14px auto 2px;user-select:none}
+  .arc-stage svg{display:block;width:100%;height:auto;overflow:visible}
+  .arc-stage .arc-guide{fill:none;stroke:var(--graph-acc);stroke-opacity:.28;stroke-width:1.6;stroke-dasharray:3 7}
+  .arc-stage .arc-prog{fill:none;stroke:var(--text-acc);stroke-width:2.4;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,158,0,.5))}
+  .arc-stage .node-mk{stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:1.5;fill:var(--graph-soft)}
+  .arc-stage .node-ring{fill:none;stroke:var(--text-acc);stroke-width:2;opacity:0}
+  .arc-stage .orb-glow{fill:var(--text-acc);opacity:.22}
+  .arc-stage .orb-core{fill:var(--text-acc)}
+  .arc-stage .device{transform-box:fill-box;transform-origin:center;opacity:0}
+  .arc-stage .dv-fill{fill:#160d09;stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:1.5}
+  .arc-stage .dv-line{fill:none;stroke:var(--graph-acc);stroke-opacity:.6;stroke-width:1.6;stroke-linecap:round}
+  .arc-stage .dv-mic{fill:var(--graph-acc);opacity:.4}
+  .arc-stage .dv-cloud{fill:rgba(192,132,252,.10);stroke:var(--graph-acc);stroke-opacity:.55;stroke-width:4}
+  .arc-stage .dv-clouddot{fill:var(--graph-acc);opacity:.5}
+  .arc-stage .drop-app{stroke:rgba(8,4,2,.35);stroke-width:.6}
+  .arc-stage .da0 rect{fill:var(--text-acc)} .arc-stage .da1 rect{fill:var(--graph-acc)} .arc-stage .da2 rect{fill:var(--text-acc)}
+  .arc-stage .wl-arc{fill:none;stroke:var(--text-acc);stroke-width:1.6;stroke-linecap:round;opacity:.75}
+  .arc-stage .era{font-family:var(--font-display);font-weight:600;font-size:16px;text-anchor:start;fill:var(--faint);opacity:0}
+  .arc-stage .era-sub{font-family:var(--font-display);font-size:14px;letter-spacing:.13em;text-transform:uppercase;text-anchor:start;fill:var(--faint);opacity:0}
+  .arc-cap{text-align:center;color:var(--muted);font-family:var(--font-display);font-size:15px;margin-top:4px;min-height:22px}
+  .arc-cap b{color:var(--text-acc);font-weight:600}
+  /* Solution card: full-width headline, then text (1/3) + animation (2/3) */
+  #c2 .sol-row{display:grid;grid-template-columns:1fr 2fr;gap:clamp(18px,3vw,40px);align-items:center;margin-top:18px}
+  #c2 .sol-text .lede{max-width:38ch}
+  #c2 .sol-text .kicker{margin-top:14px}
+  #c2 .sol-anim{min-width:0}
+  #c2 .sol-anim .arc-stage{max-width:none;margin:0 auto}
+  @media (max-width:780px){ #c2 .sol-row{grid-template-columns:1fr;gap:10px} }
+</style>
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a class="logo" href="#" aria-label="Sonical home"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-111.88 29.75 565.88 105.5" fill="currentColor" role="img" aria-label="Sonical"><g transform="translate(-120.0625,21.5625) scale(0.24375) matrix(1,0,0,1.0010114,-111.59169,-378.24999)"><path d="m 408.47608,427.8173 -61.72038,36.02514 -185.16401,108.07405 63.27951,36.9343 189.83574,110.80288 61.72185,-36.02514 -189.83718,-110.80291 123.44075,-72.05029 0.001,-2e-5 189.83577,110.80291 61.72182,-36.02515 z"/><path d="M 414.7073,827.41315 476.42768,791.388 661.59169,683.31396 598.31218,646.37966 408.47644,535.57677 l -61.72185,36.02515 189.83718,110.80291 -123.44075,72.05028 -0.001,3e-5 -189.83577,-110.80291 -61.72182,36.02514 z"/></g><path transform="scale(1.0552352,0.94765602)" d="m 71.783152,52.761832 q 5.571752,0 9.22221,1.152776 3.650459,1.056712 5.763882,3.2662 2.113424,2.113424 2.881941,5.283559 0.864582,3.170135 0.864582,7.300917 v 5.667817 h -8.261563 v -5.283559 q 0,-2.785876 -0.480324,-4.70717 -0.480323,-2.017359 -1.729165,-3.170135 -1.248841,-1.248841 -3.266199,-1.729164 -1.921294,-0.576389 -4.995364,-0.576389 H 66.01927 q -2.978006,0 -4.995365,0.576389 -2.017358,0.480323 -3.266199,1.729164 -1.152777,1.152776 -1.6331,3.170135 -0.480324,1.921294 -0.480324,4.70717 v 2.017359 q 0,2.689811 0.384259,4.515041 0.480324,1.825229 1.537035,3.07407 1.152777,1.248841 3.074071,2.017359 1.921294,0.768517 4.899299,1.248841 l 6.916658,1.056711 q 5.187494,0.864583 8.645823,2.209488 3.458329,1.344906 5.475688,3.45833 2.113423,2.113423 2.978006,5.187493 0.864582,2.978006 0.864582,7.300916 v 2.11342 q 0,4.13079 -0.864582,7.30092 -0.768518,3.17014 -2.881941,5.37962 -2.113424,2.11343 -5.763882,3.2662 -3.554394,1.05672 -9.126146,1.05672 H 66.01927 q -5.571753,0 -9.222211,-1.05672 -3.554394,-1.15277 -5.667817,-3.2662 -2.113424,-2.20948 -2.978006,-5.37962 -0.768518,-3.17013 -0.768518,-7.30092 v -5.667813 h 8.261564 v 5.283563 q 0,5.57175 2.209488,7.8773 2.209488,2.30555 8.1655,2.30555 h 5.763882 q 3.07407,0 4.995364,-0.48032 2.017358,-0.57639 3.170135,-1.72916 1.248841,-1.24885 1.729164,-3.17014 0.480324,-2.01736 0.480324,-4.80323 v -2.01736 q 0,-2.689814 -0.480324,-4.515044 -0.384258,-1.825229 -1.537035,-3.07407 -1.056711,-1.248841 -2.978005,-2.017359 -1.921294,-0.768517 -4.8993,-1.248841 l -6.916658,-1.056711 q -5.187494,-0.864583 -8.645823,-2.209488 -3.458329,-1.344906 -5.571752,-3.45833 -2.017359,-2.113423 -2.881941,-5.187493 -0.864583,-3.07407 -0.864583,-7.396982 v -2.017358 q 0,-4.130782 0.768518,-7.300917 0.864582,-3.170135 2.978006,-5.283559 2.113423,-2.209488 5.667817,-3.2662 3.650458,-1.152776 9.222211,-1.152776 z m 53.714618,0.09607 h 5.76388 q 5.57175,0 9.12615,1.152776 3.65046,1.056712 5.76388,3.2662 2.11342,2.113423 2.97801,5.283558 0.86458,3.170135 0.86458,7.300917 v 34.391162 q 0,4.13078 -0.86458,7.30092 -0.86459,3.17013 -2.97801,5.37962 -2.11342,2.11342 -5.76388,3.2662 -3.5544,1.05671 -9.12615,1.05671 h -5.76388 q -5.57175,0 -9.22221,-1.05671 -3.55439,-1.15278 -5.66782,-3.2662 -2.11342,-2.20949 -2.978,-5.37962 -0.76852,-3.17014 -0.76852,-7.30092 V 69.861348 q 0,-4.130782 0.76852,-7.300917 0.86458,-3.170135 2.978,-5.283558 2.11343,-2.209488 5.66782,-3.2662 3.65046,-1.152776 9.22221,-1.152776 z m 0,7.204852 q -2.97801,0 -4.99536,0.576388 -2.01736,0.480324 -3.2662,1.6331 -1.15278,1.152776 -1.6331,3.170135 -0.48033,1.921294 -0.48033,4.803235 v 33.622643 q 0,2.88194 0.48033,4.8993 0.48032,1.92129 1.6331,3.07407 1.24884,1.15278 3.2662,1.72917 2.01735,0.48032 4.99536,0.48032 h 5.76388 q 3.07407,0 4.99537,-0.48032 2.01735,-0.57639 3.17013,-1.72917 1.24884,-1.15278 1.72917,-3.07407 0.48032,-2.01736 0.48032,-4.8993 V 70.245607 q 0,-2.881941 -0.48032,-4.803235 -0.48033,-2.017359 -1.72917,-3.170135 -1.15278,-1.152776 -3.17013,-1.6331 -1.9213,-0.576388 -4.99537,-0.576388 z m 51.69728,60.616821 h -8.26157 V 53.434285 h 8.26157 l 27.76269,50.049705 V 53.434285 h 8.26157 v 67.245285 h -8.26157 L 177.19505,70.533801 Z m 56.40443,-67.245285 h 8.26157 v 67.245285 h -8.26157 z m 51.60121,67.821675 h -5.76389 q -5.57175,0 -9.22221,-1.05671 -3.55439,-1.15278 -5.66781,-3.2662 -2.11343,-2.20949 -2.97801,-5.37962 -0.76852,-3.17014 -0.76852,-7.30092 V 69.861348 q 0,-4.130782 0.76852,-7.300917 0.86458,-3.170135 2.97801,-5.283558 2.11342,-2.209488 5.66781,-3.2662 3.65046,-1.152776 9.22221,-1.152776 h 5.76389 q 5.57175,0 9.12614,1.152776 3.65046,1.056712 5.76388,3.2662 2.11343,2.113423 2.97801,5.283558 0.86458,3.170135 0.86458,7.300917 v 7.493047 h -8.35763 v -7.108788 q 0,-2.881941 -0.48032,-4.803235 -0.48032,-2.017359 -1.72917,-3.170135 -1.15277,-1.152776 -3.17013,-1.6331 -1.92129,-0.576388 -4.99536,-0.576388 h -5.76389 q -2.978,0 -4.99536,0.576388 -2.01736,0.480324 -3.2662,1.6331 -1.15278,1.152776 -1.6331,3.170135 -0.48032,1.921294 -0.48032,4.803235 v 33.622643 q 0,2.88194 0.48032,4.8993 0.48032,1.92129 1.6331,3.07407 1.24884,1.15278 3.2662,1.72917 2.01736,0.48032 4.99536,0.48032 h 5.76389 q 3.07407,0 4.99536,-0.48032 2.01736,-0.57639 3.17013,-1.72917 1.24885,-1.15278 1.72917,-3.07407 0.48032,-2.01736 0.48032,-4.8993 v -7.108787 h 8.35763 v 7.493047 q 0,4.13078 -0.86458,7.30092 -0.86458,3.17013 -2.97801,5.37962 -2.11342,2.11342 -5.76388,3.2662 -3.55439,1.05671 -9.12614,1.05671 z m 79.17185,-0.57639 -5.95601,-18.63655 H 333.7279 l -5.95601,18.63655 h -8.54976 l 21.5185,-67.245285 h 10.66318 L 372.9223,120.67957 Z M 335.84133,94.838169 h 20.46178 L 346.02418,62.848625 Z m 62.64872,18.636551 h 27.95482 v 7.20485 H 390.22848 V 53.434285 h 8.26157 z" id="sonical-wordmark"/></svg></a>
+    <ul class="nav-links" id="navLinks"></ul>
+  </div>
+</header>
+
+<canvas id="starfield" aria-hidden="true"></canvas>
+<div class="nebula" aria-hidden="true"></div>
+
+<!-- ====== CARD PHASE: 3 invisible snap stops drive the fixed stage ====== -->
+<div id="track">
+  <div class="snap-stop"></div>
+  <div class="snap-stop"></div>
+  <div class="snap-stop"></div>
+</div>
+
+<div id="cardStage">
+  <!-- CARD 0 · INTRO -->
+  <section class="card" data-title="Home" id="c0">
+    <div class="panel">
+      <p class="eyebrow">Sonical</p>
+      <h2>A universe of apps <span class="acc">for your ears</span></h2>
+      <p class="lede">The smartphone put a computer in your pocket. We&rsquo;ve built one for your ears.</p>
+      <p class="sub">Sonical builds CosmOS, the operating system for the ears.</p>
+      <div class="ctarow">
+        <button class="btn btn-primary">Talk to us</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 1 · PROBLEM -->
+  <section class="card" data-title="Problem" id="c1">
+    <div class="panel">
+      <p class="eyebrow">The problem</p>
+      <h2>Every audio device ships <span class="acc">frozen in time.</span></h2>
+      <p class="lede">When you buy a new audio device, that&rsquo;s all it will ever do. The hardware could do more. The software is locked.</p>
+      <div class="stats">
+        <div class="stat"><b>455M</b><span>audio devices shipped in 2024</span><i>Canalys</i></div>
+        <div class="stat"><b>2B+</b><span>people live with a hearing condition today</span><i>WHO / JAMA Neurology</i></div>
+        <div class="stat"><b>2.5B</b><span>people projected to have hearing loss by 2050</span><i>WHO</i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 2 · SOLUTION -->
+  <section class="card" data-title="Solution" id="c2">
+    <div class="panel">
+      <p class="eyebrow">The solution</p>
+      <h2>CosmOS turns any audio device into <span class="acc">a computer for your ears.</span></h2>
+      <div class="sol-row">
+       <div class="sol-text">
+        <p class="lede">One operating system for everything your device can hear and sense. Install apps, chain them together, and change what your device does years after you bought it. We call them <strong class="acc">personal hearing computers</strong>.</p>
+        <p class="kicker">This is Headphone 3.0. The device is the constant. Everything else can change.</p>
+       </div>
+       <div class="sol-anim">
+        <!-- Headphone 1.0 → 2.0 → 3.0 arc strip -->
+        <div class="arc-stage" id="arcStage">
+        <svg viewBox="43 12 820 454" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path id="arcGuide" class="arc-guide" d="M130,405 C 380,400 470,388 690,90"/>
+          <path id="arcProg"  class="arc-prog"  d="M130,405 C 380,400 470,388 690,90"/>
+          <circle id="arcRing0" class="node-ring" r="8"/>
+          <circle id="arcRing1" class="node-ring" r="8"/>
+          <circle id="arcRing2" class="node-ring" r="8"/>
+          <circle id="arcMk0" class="node-mk" r="6"/>
+          <circle id="arcMk1" class="node-mk" r="6"/>
+          <circle id="arcMk2" class="node-mk" r="6"/>
+
+          <!-- 1.0 · WIRED over-ear cans -->
+          <g id="arcDev0pos"><g class="device" id="arcDev0">
+            <path class="dv-line" d="M-30,-2 C-30,-36 30,-36 30,-2"/>
+            <rect class="dv-fill" x="-42" y="-6" width="15" height="32" rx="7"/>
+            <rect class="dv-fill" x="27"  y="-6" width="15" height="32" rx="7"/>
+            <path class="dv-line" d="M35,24 C 42,38 31,46 38,56"/>
+          </g></g>
+
+          <!-- 2.0 · WIRELESS bud -->
+          <g id="arcDev1pos"><g class="device" id="arcDev1">
+            <g transform="translate(-26,0) scale(1.32)">
+            <rect class="dv-fill" x="-6" y="2" width="12" height="28" rx="6" transform="rotate(-12 0 12)"/>
+            <circle class="dv-mic" cx="-7" cy="28" r="2.3"/>
+            <ellipse class="dv-fill" cx="-15" cy="-6" rx="9" ry="13" transform="rotate(-18 -15 -6)" stroke-opacity=".4"/>
+            <circle class="dv-fill" cx="0" cy="-6" r="17"/>
+            <path class="wl-arc" d="M18,-26 A12,12 0 0 1 28,-15"/>
+            <path class="wl-arc" d="M24,-32 A20,20 0 0 1 38,-13" opacity=".45"/>
+            </g>
+          </g></g>
+
+          <!-- 3.0 · APPABLE — the cloud drops apps onto the device -->
+          <g id="arcDev2pos"><g class="device" id="arcDev2">
+            <g transform="translate(-38,12) scale(1.22)">
+            <g transform="translate(-82,-58) scale(.36)">
+              <path class="dv-cloud" d="M150 96 a30 30 0 0 1 18 -52 a38 38 0 0 1 72 -16 a32 32 0 0 1 50 26 a26 26 0 0 1 -6 42 z"/>
+              <circle class="dv-clouddot" cx="185" cy="62" r="5"/>
+              <circle class="dv-clouddot" cx="207" cy="50" r="5" opacity=".35"/>
+              <circle class="dv-clouddot" cx="229" cy="62" r="5"/>
+              <circle class="dv-clouddot" cx="251" cy="52" r="5" opacity=".35"/>
+            </g>
+            <g class="drop-app da0" id="arcDrop0" style="opacity:0"><rect x="-5.5" y="-5.5" width="11" height="11" rx="3"/></g>
+            <g class="drop-app da1" id="arcDrop1" style="opacity:0"><rect x="-5.5" y="-5.5" width="11" height="11" rx="3"/></g>
+            <g class="drop-app da2" id="arcDrop2" style="opacity:0"><rect x="-5.5" y="-5.5" width="11" height="11" rx="3"/></g>
+            <g transform="translate(0,22) scale(.6)">
+              <path class="dv-line" d="M-30,-2 C-30,-36 30,-36 30,-2"/>
+              <rect class="dv-fill" x="-42" y="-6" width="15" height="32" rx="7"/>
+              <rect class="dv-fill" x="27"  y="-6" width="15" height="32" rx="7"/>
+            </g>
+            </g>
+          </g></g>
+
+          <text id="arcLbl0" class="era">Headphone 1.0</text>
+          <text id="arcSub0" class="era-sub">analog &amp; wired</text>
+          <text id="arcLbl1" class="era">Headphone 2.0</text>
+          <text id="arcSub1" class="era-sub">digital &amp; wireless</text>
+          <text id="arcLbl2" class="era">Headphone 3.0</text>
+          <text id="arcSub2" class="era-sub">software &amp; app store</text>
+
+          <g id="arcOrb" style="opacity:0">
+            <circle class="orb-glow" r="13"/>
+            <circle class="orb-core" r="5"/>
+          </g>
+        </svg>
+        </div>
+        <p class="arc-cap" id="arcCaption"></p>
+       </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ====== NORMAL SCROLLING PHASE: one giant frosted card over the stars ====== -->
+<main id="main">
+  <div class="mega">
+
+    <!-- S1 · HOW IT WORKS — full-width cloud → phone → ear animation -->
+    <section class="sect" data-title="How it works" id="how">
+      <div class="fr">
+        <p class="eyebrow">How it works</p>
+        <h2>Apps, <span class="acc">but for your ears.</span></h2>
+        <p class="lede">We have apps for our phones. Why should they stop there? Developers publish audio apps to the cloud. They download through the phone you already own, onto the CosmOS device in your ears. No new phone, nothing extra in between.</p>
+
+        <div class="anim-stage" id="animStage">
+          <svg viewBox="0 64 880 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line class="line-path" x1="236" y1="166" x2="384" y2="166"/>
+            <line class="line-path" x1="496" y1="166" x2="688" y2="166"/>
+            <g transform="translate(-70,82)">
+              <path class="cloud-body" d="M150 96
+                a30 30 0 0 1 18 -52
+                a38 38 0 0 1 72 -16
+                a32 32 0 0 1 50 26
+                a26 26 0 0 1 -6 42 z"/>
+              <circle class="cloud-dot" cx="185" cy="62" r="5"/>
+              <circle class="cloud-dot" cx="207" cy="50" r="5" opacity=".35"/>
+              <circle class="cloud-dot" cx="229" cy="62" r="5"/>
+              <circle class="cloud-dot" cx="251" cy="52" r="5" opacity=".35"/>
+              <circle class="cloud-dot" cx="207" cy="76" r="5" opacity=".35"/>
+              <circle class="cloud-dot" cx="229" cy="84" r="5" opacity=".5"/>
+            </g>
+            <g id="animPhone">
+              <rect class="phone-body" x="392" y="78" width="96" height="176" rx="18"/>
+              <rect class="phone-screen" x="400" y="94" width="80" height="144" rx="10"/>
+              <rect class="phone-notch" x="424" y="84" width="32" height="5" rx="2.5"/>
+              <g id="animDl" opacity="0">
+                <rect class="dl-bar-track" x="410" y="208" width="60" height="6" rx="3"/>
+                <rect class="dl-bar" id="animDlBar" x="410" y="208" width="0" height="6" rx="3"/>
+              </g>
+            </g>
+            <g id="animBud">
+              <circle class="ring r1" cx="730" cy="160" r="40"/>
+              <circle class="ring r2" cx="730" cy="160" r="40"/>
+              <rect class="bud-body" x="720" y="174" width="19" height="44" rx="9.5" transform="rotate(-12 730 178)"/>
+              <circle class="bud-mic" cx="721" cy="214" r="2.5"/>
+              <ellipse class="bud-body" cx="712" cy="158" rx="12" ry="16" transform="rotate(-18 712 158)" stroke-opacity=".4"/>
+              <circle class="bud-body" cx="730" cy="158" r="25"/>
+              <g id="animDots"></g>
+            </g>
+            <g class="step" id="animStep1">
+              <text class="lbl" x="150" y="285" text-anchor="middle">1 · Developers publish</text>
+              <text class="lbl" x="150" y="300" text-anchor="middle">apps to the cloud</text>
+            </g>
+            <g class="step" id="animStep2">
+              <text class="lbl" x="440" y="285" text-anchor="middle">2 · They download through</text>
+              <text class="lbl" x="440" y="300" text-anchor="middle">the phone you already own</text>
+            </g>
+            <g class="step" id="animStep3">
+              <text class="lbl" x="730" y="285" text-anchor="middle">3 · New abilities run</text>
+              <text class="lbl" x="730" y="300" text-anchor="middle">in your ears</text>
+            </g>
+          </svg>
+          <div class="traveler" id="animTraveler" aria-hidden="true"></div>
+        </div>
+        <p class="anim-caption" id="animCaption">&nbsp;</p>
+        <div class="anim-tray" id="animTray"></div>
+
+        <a class="deep" href="#">How CosmOS works in detail →</a>
+      </div>
+    </section>
+
+    <!-- S2 · ONE OS -->
+    <section class="sect" data-title="One OS" id="oneos">
+      <div class="fr cols">
+        <div>
+          <p class="eyebrow">The platform</p>
+          <h2>One OS. <span class="acc">Every audio device.</span></h2>
+          <p class="lede">CosmOS runs on the device itself - audio, sensors and every data stream the hardware carries. Real-time scheduling, multiple apps processing the same stream, and latency low enough for professional monitoring.</p>
+          <a class="deep" href="#">The technology behind it →</a>
+        </div>
+        <div class="tiles">
+          <div class="tile"><b>Headphones</b><span>studio, gaming, everyday listening</span></div>
+          <div class="tile"><b>Headsets</b><span>calls and communication</span></div>
+          <div class="tile"><b>Earbuds</b><span>true wireless, all day</span></div>
+          <div class="tile"><b>Smart eyewear</b><span>audio built into glasses</span></div>
+        </div>
+      </div>
+      <div class="fr" style="margin-top:34px">
+        <p class="sub" style="margin-bottom:14px">Apps running on CosmOS today:</p>
+        <div class="pillrow" style="margin-top:0">
+          <span class="pill">hearing protection</span><span class="pill">hearing correction</span>
+          <span class="pill">personal audio</span><span class="pill">noise reduction</span>
+          <span class="pill">spatial audio</span><span class="pill">EQ</span>
+          <span class="pill">compressor</span><span class="pill">crossfeed</span>
+          <span class="pill">clarity boost</span>
+        </div>
+        <p class="sub" style="margin-top:16px">And more on the way. You choose the apps your device runs, so it fixes what matters to you, not just what every product ships with. <a class="deep" href="coming-soon.html">See what CosmOS can do &rarr;</a></p>
+      </div>
+    </section>
+
+    <!-- S3 · VIDEO -->
+    <section class="sect" data-title="Video" id="video">
+      <div class="fr">
+        <p class="eyebrow">See it in action</p>
+        <h2>CosmOS, <span class="acc">running.</span></h2>
+        <div class="media-ph wide video-soon" role="img" aria-label="Product film coming soon">
+          <span class="play-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+          <span>Product film — coming soon</span>
+        </div>
+        <p class="sub" style="text-align:center;max-width:none;margin-top:16px">A short film of CosmOS running on Remora is in production.</p>
+      </div>
+    </section>
+
+    <!-- S4 · ECOSYSTEM -->
+    <section class="sect" data-title="Ecosystem" id="ecosystem">
+      <div class="fr">
+        <p class="eyebrow">The ecosystem</p>
+        <h2>Four players. <span class="acc">One ecosystem.</span></h2>
+        <p class="lede">Sonical is the technology company at the center: we license the OS, the apps platform and the reference designs. Our partners build the products.</p>
+        <p class="sub">Each new app makes every device worth more. Each new device gives developers a bigger audience.</p>
+      </div>
+      <div class="fr cols">
+        <div class="fly-stage" id="flyStage">
+          <svg viewBox="0 0 660 520" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- the loop -->
+            <circle class="fly-ring" cx="330" cy="250" r="140"/>
+            <!-- spokes: hub → each node (dev, maker, listener, supplier) -->
+            <line class="fly-spoke" id="flySpoke-0" x1="330" y1="250" x2="330" y2="110"/>
+            <line class="fly-spoke" id="flySpoke-1" x1="330" y1="250" x2="470" y2="250"/>
+            <line class="fly-spoke" id="flySpoke-2" x1="330" y1="250" x2="330" y2="390"/>
+            <line class="fly-spoke" id="flySpoke-3" x1="330" y1="250" x2="190" y2="250"/>
+            <!-- value pulses that ride the spoke into the hub when a node fires -->
+            <circle class="fly-charge" id="flyCharge-0" r="6"/>
+            <circle class="fly-charge" id="flyCharge-1" r="6"/>
+            <circle class="fly-charge" id="flyCharge-2" r="6"/>
+            <circle class="fly-charge" id="flyCharge-3" r="6"/>
+            <!-- bright travelling arc -->
+            <path class="fly-arc" id="flyArc" d=""/>
+
+            <!-- hub -->
+            <circle class="fly-hub-glow" cx="330" cy="250" r="62"/>
+            <circle class="fly-hub-body" cx="330" cy="250" r="54"/>
+            <text class="fly-hub-name" x="330" y="247">Sonical</text>
+            <text class="fly-hub-sub" x="330" y="266">the platform</text>
+
+            <!-- wheel rotated 90° CW (Ollie 2026-06-13) so Tech suppliers leads at the top,
+                 matching the legend order; also moves the long labels to top/bottom where they fit.
+                 Loop reads clockwise: suppliers → developers → product makers → listeners. -->
+            <!-- node: Technology suppliers (top) -->
+            <g class="fly-node" id="flyNode-0">
+              <circle class="pr"  cx="330" cy="110" r="36"/>
+              <circle class="pr pr2" cx="330" cy="110" r="36"/>
+              <circle class="icon-bg" cx="330" cy="110" r="36"/>
+              <g class="glyph" transform="translate(312,92) scale(1.5)"><path d="M8 8 h8 v8 h-8 z M11 5 v3 M14.5 5 v3 M11 16 v3 M14.5 16 v3 M5 11 h3 M5 14.5 h3 M16 11 h3 M16 14.5 h3"/></g>
+              <text class="name" x="330" y="56" text-anchor="middle">Tech suppliers</text>
+            </g>
+            <!-- node: Developers (right) -->
+            <g class="fly-node" id="flyNode-1">
+              <circle class="pr"  cx="470" cy="250" r="36"/>
+              <circle class="pr pr2" cx="470" cy="250" r="36"/>
+              <circle class="icon-bg" cx="470" cy="250" r="36"/>
+              <g class="glyph" transform="translate(452,232) scale(1.5)"><path d="M10 9 L6 12 L10 15 M14 9 L18 12 L14 15"/></g>
+              <text class="name" x="518" y="256" text-anchor="start">Developers</text>
+            </g>
+            <!-- node: Product makers (bottom) -->
+            <g class="fly-node" id="flyNode-2">
+              <circle class="pr"  cx="330" cy="390" r="36"/>
+              <circle class="pr pr2" cx="330" cy="390" r="36"/>
+              <circle class="icon-bg" cx="330" cy="390" r="36"/>
+              <g class="glyph" transform="translate(312,372) scale(1.5)"><path d="M6 13 v-1 a6 6 0 0 1 12 0 v1 M6 13 h2.4 v4 h-2.4 z M15.6 13 h2.4 v4 h-2.4 z"/></g>
+              <text class="name" x="330" y="452" text-anchor="middle">Product makers</text>
+            </g>
+            <!-- node: Listeners (left) -->
+            <g class="fly-node" id="flyNode-3">
+              <circle class="pr"  cx="190" cy="250" r="36"/>
+              <circle class="pr pr2" cx="190" cy="250" r="36"/>
+              <circle class="icon-bg" cx="190" cy="250" r="36"/>
+              <g class="glyph" transform="translate(172,232) scale(1.5)"><path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3.5 5.5S13 17 13 19a2.5 2.5 0 0 1-5 0M9.5 9a2.5 2.5 0 0 1 5 0"/></g>
+              <text class="name" x="142" y="256" text-anchor="end">Listeners</text>
+            </g>
+
+            <!-- travelling momentum token -->
+            <g class="fly-token" id="flyToken">
+              <circle class="halo" r="19"/>
+              <circle class="core" r="10"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="flywheel">
+          <div class="fly-cell"><b>Technology suppliers</b><span>put chips, sensors and radios in front of every builder</span></div>
+          <div class="fly-cell"><b>Developers</b><span>build audio apps once, run them on any CosmOS device</span></div>
+          <div class="fly-cell"><b>Product makers</b><span>ship devices that get better after they leave the factory</span></div>
+          <div class="fly-cell"><b>Listeners</b><span>choose the apps that match their ears and their work</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5 · WHO IT HELPS -->
+    <section class="sect" data-title="Who it helps" id="people">
+      <div class="fr">
+        <p class="eyebrow">Who it helps</p>
+        <h2>Made for how people <span class="acc">actually hear.</span></h2>
+        <span class="ph">Illustrative examples</span>
+        <div class="usecases">
+          <div class="uc"><b>The mix engineer</b><p>monitors a live session with latency under 5 ms over UWB, while a hearing protection app tracks exposure in the background.</p></div>
+          <div class="uc"><b>The listener with hearing loss</b><p>runs a correction app tuned to their hearing, with dialogue enhancement for TV, on the same device everyone else buys.</p></div>
+          <div class="uc"><b>The gamer</b><p>runs spatial audio for positioning and a clarity boost for voice chat, tuned per game.</p></div>
+          <div class="uc"><b>The immersive listener</b><p>runs spatial audio and crossfeed for films, games and concerts, and swaps the mix as easily as phone apps.</p></div>
+        </div>
+        <p class="kicker">Every experience, elevated and personalized.</p>
+      </div>
+    </section>
+
+    <!-- S6 · MOMENTUM -->
+    <section class="sect" data-title="Momentum" id="momentum">
+      <div class="fr">
+        <p class="eyebrow">Momentum</p>
+        <h2>Already <span class="acc">underway.</span></h2>
+        <ul class="miles">
+          <li>Trial manufacturing at <b>Sony UK Technology Centre</b> in Pencoed, Wales: the facility that builds Sony broadcast cameras and the Raspberry Pi <i>(announced Dec 2025)</i></li>
+        </ul>
+        <blockquote class="pull">&ldquo;Our goal is to make Sonical the Raspberry Pi for your hearing.&rdquo;<cite>Gary Spittle · Founder &amp; CEO</cite></blockquote>
+      </div>
+      <div class="fr callout">
+        <p><b>Remora</b> is the first product company building on CosmOS. Its devices are the world&rsquo;s first personal hearing computers - Headphone 3.0, built with Sonical&rsquo;s software and reference designs. One use case for the platform; the first of many. <a href="https://remora.pro">remora.pro →</a></p>
+      </div>
+    </section>
+
+    <!-- S7 · PARTNERS -->
+    <section class="sect" data-title="Partners" id="partners">
+      <div class="fr">
+        <p class="eyebrow">Partners</p>
+        <h2>Building <span class="acc">on CosmOS</span></h2>
+        <div class="pgroup">
+          <h3>Technology Partners</h3>
+          <div class="logo-wall">
+            <img src="logos/fraunhofer.png" alt="Fraunhofer">
+            <img src="logos/hear360.png" alt="Hear360">
+            <img src="logos/oikla.png" alt="Oikla">
+            <span class="logo-lockup" role="img" aria-label="Golden Hearing"><img src="logos/golden-hearing.png" alt=""><span class="nm"><span>Golden</span><span>Hearing</span></span></span>
+            <img src="logos/hear-angel.png" alt="Hear Angel">
+            <img src="logos/idun-audio.png" alt="IDUN Audio">
+            <img src="logos/sigma-connectivity.png" alt="Sigma Connectivity">
+            <img src="logos/antennaware.png" alt="AntennaWare">
+            <img src="logos/xmos.png" alt="XMOS">
+            <img src="logos/renesas.png" alt="Renesas">
+            <img src="logos/st.png" alt="STMicroelectronics">
+            <img src="logos/bosch.png" alt="Bosch">
+            <img src="logos/qorvo.png" alt="Qorvo">
+          </div>
+        </div>
+        <p class="prog">Partners join through the <b>CosmOS Certified Technology Program</b>: SDK access, certification and support.</p>
+      </div>
+    </section>
+
+    <!-- S8 · FOR DEVELOPERS -->
+    <section class="sect" data-title="Developers" id="developers">
+      <div class="fr">
+        <p class="eyebrow">For developers</p>
+        <h2>Want to build <span class="acc">on CosmOS?</span></h2>
+        <p class="lede">The SDK is invitation-only for now. Tell us what you want to build and we&rsquo;ll go from there.</p>
+        <div class="ctarow">
+          <button class="btn btn-ghost">Talk to us →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- S9 · TALK TO US -->
+    <section class="sect" data-title="Talk to us" id="contact">
+      <div class="fr">
+        <p class="eyebrow">Get in touch</p>
+        <h2>Talk <span class="acc">to us</span></h2>
+        <p class="lede">Get in touch and tell us how you&rsquo;d fit into the platform. A real person reads every message.</p>
+        <div class="contact-row">
+        <form class="form" id="contactForm" novalidate>
+          <input type="text" id="cfName" name="cfName" placeholder="Name" autocomplete="name" required>
+          <input type="email" id="cfEmail" name="cfEmail" placeholder="Email" autocomplete="email" required>
+          <!-- On submit: posts to HubSpot (portal 143819223) when a form GUID is set in the
+               contact-form script below; otherwise opens a pre-filled email to info@sonical.ai.
+               Routing by reason (waitlist, info list, pipelines) is handled in HubSpot. -->
+          <fieldset class="quiz">
+            <legend>What brings you here? <span>tick all that apply</span></legend>
+            <label><input type="checkbox" name="reason" value="I build audio apps"> I build audio apps</label>
+            <label><input type="checkbox" name="reason" value="I make audio products"> I make audio products</label>
+            <label><input type="checkbox" name="reason" value="I supply technology or components"> I supply technology or components</label>
+            <label><input type="checkbox" name="reason" value="I want a Remora"> I want a Remora</label>
+            <label><input type="checkbox" name="reason" value="Press and media"> Press and media</label>
+            <label><input type="checkbox" name="reason" value="Something else"> Something else</label>
+          </fieldset>
+          <div><button class="btn btn-primary" type="submit">Send</button></div>
+          <p class="form-status" id="cfStatus" role="status" aria-live="polite"></p>
+        </form>
+        <div class="contact-aside" aria-hidden="true">
+          <!-- easter egg: an alien grooving in headphones (audio = what Sonical's all about) -->
+          <div class="scene scene-groove">
+            <svg viewBox="0 0 360 250" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="alienGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#b884f8"/><stop offset="1" stop-color="#7c3aed"/>
+                </linearGradient>
+              </defs>
+
+              <circle class="twk t1" cx="50" cy="50" r="2"/><circle class="twk t2" cx="312" cy="60" r="2.2"/>
+              <circle class="twk t3" cx="280" cy="34" r="1.6"/><circle class="twk t1" cx="86" cy="30" r="1.5"/>
+
+              <!-- a little band of aliens vibing in headphones (inlined — CSS class styles
+                   don't cross into <use> shadow DOM, which rendered them black) -->
+              <g transform="translate(92,214) scale(.7)"><g class="groover g2">
+                <ellipse class="foot" cx="-8" cy="-2" rx="7" ry="4.5"/><ellipse class="foot" cx="8" cy="-2" rx="7" ry="4.5"/>
+                <path class="arm" d="M-14 -38 Q-24 -44 -27 -54"/><path class="arm" d="M14 -36 Q22 -30 24 -22"/>
+                <ellipse class="body" cx="0" cy="-28" rx="16" ry="21"/><ellipse class="belly" cx="-4" cy="-24" rx="7" ry="11"/>
+                <g class="eye-lid"><circle class="eye-white" cx="0" cy="-31" r="9"/><circle class="eye-pupil" cx="0" cy="-30" r="4.6"/><circle class="eye-glint" cx="-2" cy="-33" r="1.9"/><circle class="eye-glint" cx="2.2" cy="-28.5" r="0.9" opacity=".8"/></g>
+                <path class="mouth" d="M-5 -18 q5 4 10 0"/>
+                <g class="antleft"><path class="ant" d="M-6 -47 q-4 -8 -9 -12"/><circle class="ant-halo" cx="-16" cy="-60" r="5"/><circle class="ant-bulb" cx="-16" cy="-60" r="3"/></g>
+                <g class="antright"><path class="ant" d="M6 -47 q4 -8 9 -12"/><circle class="ant-halo" cx="16" cy="-60" r="5"/><circle class="ant-bulb" cx="16" cy="-60" r="3"/></g>
+                <path class="hp-band" d="M-16 -36 a16 16 0 0 1 32 0"/>
+                <g><circle class="hp-cup" cx="-16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="-16" cy="-29" r="2.4"/></g>
+                <g><circle class="hp-cup" cx="16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="16" cy="-29" r="2.4"/></g>
+              </g></g>
+
+              <g transform="translate(270,210) scale(.78)"><g class="groover g3">
+                <ellipse class="foot" cx="-8" cy="-2" rx="7" ry="4.5"/><ellipse class="foot" cx="8" cy="-2" rx="7" ry="4.5"/>
+                <path class="arm" d="M-14 -38 Q-24 -44 -27 -54"/><path class="arm" d="M14 -36 Q22 -30 24 -22"/>
+                <ellipse class="body" cx="0" cy="-28" rx="16" ry="21"/><ellipse class="belly" cx="-4" cy="-24" rx="7" ry="11"/>
+                <g class="eye-lid"><circle class="eye-white" cx="0" cy="-31" r="9"/><circle class="eye-pupil" cx="0" cy="-30" r="4.6"/><circle class="eye-glint" cx="-2" cy="-33" r="1.9"/><circle class="eye-glint" cx="2.2" cy="-28.5" r="0.9" opacity=".8"/></g>
+                <path class="mouth" d="M-5 -18 q5 4 10 0"/>
+                <g class="antleft"><path class="ant" d="M-6 -47 q-4 -8 -9 -12"/><circle class="ant-halo" cx="-16" cy="-60" r="5"/><circle class="ant-bulb" cx="-16" cy="-60" r="3"/></g>
+                <g class="antright"><path class="ant" d="M6 -47 q4 -8 9 -12"/><circle class="ant-halo" cx="16" cy="-60" r="5"/><circle class="ant-bulb" cx="16" cy="-60" r="3"/></g>
+                <path class="hp-band" d="M-16 -36 a16 16 0 0 1 32 0"/>
+                <g><circle class="hp-cup" cx="-16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="-16" cy="-29" r="2.4"/></g>
+                <g><circle class="hp-cup" cx="16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="16" cy="-29" r="2.4"/></g>
+              </g></g>
+
+              <g transform="translate(180,202)"><g class="groover g1">
+                <g class="waves wl"><path class="wave w1" d="M-23 -34 a8 8 0 0 0 0 11"/><path class="wave w2" d="M-28 -37 a13 13 0 0 0 0 17"/></g>
+                <g class="waves wr"><path class="wave w1" d="M23 -34 a8 8 0 0 1 0 11"/><path class="wave w2" d="M28 -37 a13 13 0 0 1 0 17"/></g>
+                <ellipse class="foot" cx="-8" cy="-2" rx="7" ry="4.5"/><ellipse class="foot" cx="8" cy="-2" rx="7" ry="4.5"/>
+                <path class="arm" d="M-14 -38 Q-24 -44 -27 -54"/><path class="arm" d="M14 -36 Q22 -30 24 -22"/>
+                <ellipse class="body" cx="0" cy="-28" rx="16" ry="21"/><ellipse class="belly" cx="-4" cy="-24" rx="7" ry="11"/>
+                <g class="eye-lid"><circle class="eye-white" cx="0" cy="-31" r="9"/><circle class="eye-pupil" cx="0" cy="-30" r="4.6"/><circle class="eye-glint" cx="-2" cy="-33" r="1.9"/><circle class="eye-glint" cx="2.2" cy="-28.5" r="0.9" opacity=".8"/></g>
+                <path class="mouth" d="M-5 -18 q5 4 10 0"/>
+                <g class="antleft"><path class="ant" d="M-6 -47 q-4 -8 -9 -12"/><circle class="ant-halo" cx="-16" cy="-60" r="5"/><circle class="ant-bulb" cx="-16" cy="-60" r="3"/></g>
+                <g class="antright"><path class="ant" d="M6 -47 q4 -8 9 -12"/><circle class="ant-halo" cx="16" cy="-60" r="5"/><circle class="ant-bulb" cx="16" cy="-60" r="3"/></g>
+                <path class="hp-band" d="M-16 -36 a16 16 0 0 1 32 0"/>
+                <g><circle class="hp-cup" cx="-16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="-16" cy="-29" r="2.4"/></g>
+                <g><circle class="hp-cup" cx="16" cy="-29" r="5.5"/><circle class="hp-cup-in" cx="16" cy="-29" r="2.4"/></g>
+              </g></g>
+            </svg>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer>
+    <a class="footer-logo" href="#" aria-label="Sonical home"><img src="sonical-lockup.svg" alt="Sonical" width="161" height="30"></a>
+    <div class="frow">
+      <span>Looking for Remora? <a href="https://remora.pro">remora.pro</a></span>
+      <span>Press and media: <a href="mailto:info@sonical.ai">info@sonical.ai</a></span>
+      <span><a href="https://linkedin.com/company/sonical-inc">LinkedIn</a></span>
+    </div>
+    © Sonical, San Mateo, California. Founded 2020.
+  </footer>
+</main>
+
+<nav class="dots" id="dots" aria-label="Section navigation"></nav>
+<p class="scroll-hint" id="hint">Scroll to explore ↓</p>
+
+<script>
+(function(){
+  "use strict";
+  /* always open on the intro card — restoring mid-timeline scroll reads as a broken state */
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  window.scrollTo(0, 0);
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".card"));
+  var sects = Array.prototype.slice.call(document.querySelectorAll(".sect"));
+  var CARD_N = cards.length; // 3
+  var docEl = document.documentElement;
+
+  /* ---- Nav: three fixed anchors (plain). Dots: full section index on the right rail ---- */
+  var targets = cards.concat(sects);
+  var navUl = document.getElementById("navLinks");
+  var dotsBox = document.getElementById("dots");
+  var dotBtns = [];
+  var contactIdx = targets.length - 1;   // "Talk to us" is the final section
+
+  /* Each nav item maps to a target (or is an external page); activeWhen decides the highlight */
+  var NAV = [
+    { label:"Home",       target:0,          activeWhen:function(idx){ return idx < contactIdx; } },
+    { label:"About us",   href:"coming-soon.html", activeWhen:function(){ return false; } },  // under-construction page until Gary's done with the Notion doc
+    { label:"Talk to us", target:contactIdx, activeWhen:function(idx){ return idx === contactIdx; } }
+  ];
+  var navBtns = NAV.map(function(item){
+    var li = document.createElement("li");
+    var btn = document.createElement("a");
+    btn.textContent = item.label;
+    if (item.href){
+      btn.setAttribute("href", item.href);   // real page (e.g. About — under-construction page)
+    } else {
+      btn.setAttribute("href", "#");
+      btn.addEventListener("click", function(e){ e.preventDefault(); jumpTo(item.target); });
+    }
+    li.appendChild(btn); navUl.appendChild(li);
+    return btn;
+  });
+
+  /* one labeled dot per card/section — the rail is the real section index */
+  targets.forEach(function(el, i){
+    var title = el.getAttribute("data-title");
+    var d = document.createElement("button");
+    d.className = "dot";
+    d.setAttribute("aria-label", title);
+    var lab = document.createElement("span");
+    lab.className = "dot-label";
+    lab.textContent = title;
+    d.appendChild(lab);
+    d.addEventListener("click", function(){ jumpTo(i); });
+    dotsBox.appendChild(d); dotBtns.push(d);
+  });
+
+  /* dot rail = focus+context menu: nearest dot to the cursor shows its full name,
+     ±1 and ±2 show smaller; everything else stays hidden */
+  function showDotMenu(cursorY){
+    dotsBox.classList.add("peek");
+    var best = 0, bestD = Infinity;
+    for (var i = 0; i < dotBtns.length; i++){
+      var r = dotBtns[i].getBoundingClientRect();
+      var dy = Math.abs(r.top + r.height / 2 - cursorY);
+      if (dy < bestD){ bestD = dy; best = i; }
+    }
+    for (var j = 0; j < dotBtns.length; j++){
+      var dist = Math.abs(j - best);
+      dotBtns[j].classList.toggle("near0", dist === 0);
+      dotBtns[j].classList.toggle("near1", dist === 1);
+      dotBtns[j].classList.toggle("near2", dist === 2);
+    }
+  }
+  function hideDotMenu(){
+    dotsBox.classList.remove("peek");
+    dotBtns.forEach(function(b){ b.classList.remove("near0", "near1", "near2"); });
+  }
+  dotsBox.addEventListener("mousemove", function(e){ showDotMenu(e.clientY); });
+  dotsBox.addEventListener("mouseleave", hideDotMenu);
+
+  /* cached viewport height — survives the 0×0 state of hidden/minimized windows */
+  var vhCache = window.innerHeight || 1;
+  function vh(){
+    if (window.innerHeight) vhCache = window.innerHeight;
+    return vhCache;
+  }
+
+  function jumpTo(i){
+    if (document.body.classList.contains("flat")){
+      targets[i].scrollIntoView({behavior:"smooth", block:"start"});
+      return;
+    }
+    var y = (i < CARD_N)
+      ? i * vh()
+      : sects[i - CARD_N].getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({top:y, behavior:"smooth"});
+  }
+
+  /* ---- Reduced-motion fallback: flat page ---- */
+  if (reduceMotion){
+    docEl.classList.add("flat");
+    document.body.classList.add("flat");
+    navBtns[0].classList.add("active");
+    return;
+  }
+
+  /* ---- Starfield: 3D warp tied to scroll ---- */
+  var STAR_DENSITY = 3400; // px² per star — raise to thin the field if perf is an issue
+  var canvas = document.getElementById("starfield");
+  var ctx = canvas.getContext("2d");
+  var W = 0, H = 0, CX = 0, CY = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var stars = [];
+  var Z_MAX = 1400, FOV = 420;
+  var RATE_CARD = Z_MAX * 1.1;   // star travel per viewport of scroll, card phase
+  var RATE_MAIN = Z_MAX * 0.4;   // slower drift behind the normal section
+
+  function buildStars(){
+    if (!window.innerWidth || !window.innerHeight) return; // ignore hidden/zero-size states
+    W = window.innerWidth; H = window.innerHeight; CX = W/2; CY = H/2;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var count = Math.min(250, Math.floor(W * H / STAR_DENSITY)); // 250 cap (Ollie's perf pick, 2026-06-19)
+    stars = [];
+    for (var i = 0; i < count; i++){
+      stars.push({
+        x: (Math.random() - .5) * W * 2.4,
+        y: (Math.random() - .5) * H * 2.4,
+        z0: Math.random() * Z_MAX,
+        hue: Math.random() < 0.25 ? "255,158,0" : "216,180,254",  /* Ember: ember-orange sparks among violet stars */
+        size: .6 + Math.random() * 1.4
+      });
+    }
+  }
+
+  function project(s, travel){
+    var z = ((s.z0 - travel) % Z_MAX + Z_MAX) % Z_MAX;
+    if (z < 1) z = 1;
+    var k = FOV / z;
+    return { sx: CX + s.x * k / 10, sy: CY + s.y * k / 10, z: z };
+  }
+
+  function paintStars(travel, velocity){
+    ctx.clearRect(0, 0, W, H);
+    var stretch = Math.min(40, Math.abs(velocity) * 2.2); // warp streaks while scrubbing
+    var back = travel - Math.sign(velocity || 1) * Math.min(60, stretch);
+    for (var i = 0; i < stars.length; i++){
+      var s = stars[i];
+      var p = project(s, travel);
+      if (p.sx < -50 || p.sx > W + 50 || p.sy < -50 || p.sy > H + 50) continue;
+      var near = 1 - p.z / Z_MAX;
+      var a = Math.min(1, .08 + near * 1.1);
+      var r = s.size * (.3 + near * 1.8);
+      if (stretch > 2){
+        var q = project(s, back);
+        ctx.strokeStyle = "rgba(" + s.hue + "," + (a * .85).toFixed(3) + ")";
+        ctx.lineWidth = r;
+        ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(p.sx, p.sy); ctx.stroke();
+      } else {
+        ctx.fillStyle = "rgba(" + s.hue + "," + a.toFixed(3) + ")";
+        ctx.beginPath(); ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  /* ---- Card choreography ----
+     Card i docks at scrollY = i × viewport. t = viewports from dock:
+     t<0 approaching from its own direction, t=0 docked, t>0 flying past. */
+  var APPROACH = 4200;
+  var DIRS = [[0,0],[ -.9,-.45],[ .9,-.4]];
+
+  function placeCards(sv){              // sv = smoothed scrollY in viewport units
+    for (var i = 0; i < CARD_N; i++){
+      var t = sv - i;
+      var el = cards[i];
+      if (t < -1.05 || t > 0.85){ el.style.opacity = 0; el.classList.remove("live"); continue; }
+      var s, op, ox = 0, oy = 0, blur = 0;
+      if (t <= 0){
+        var z = -t * APPROACH;
+        s = FOV / (FOV + z * .55);
+        op = Math.min(1, (t + 1.05) / .22) * Math.min(1, .25 + s * 1.1);
+        var conv = z / APPROACH;
+        ox = DIRS[i % DIRS.length][0] * conv * W * .55;
+        oy = DIRS[i % DIRS.length][1] * conv * H * .55;
+        blur = Math.max(0, conv - .45) * 6;
+      } else {
+        var zz = Math.min(.5, t) * 700;  // flies past the camera (cap < FOV)
+        s = FOV / (FOV - zz);
+        op = Math.max(0, 1 - t / .55);
+        oy = t * H * .12;
+      }
+      el.style.opacity = op.toFixed(3);
+      el.style.transform = "translate(-50%,-50%) translate3d(" + ox.toFixed(1) + "px," + oy.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+      el.style.filter = blur > .3 ? "blur(" + blur.toFixed(1) + "px)" : "none";
+      el.classList.toggle("live", Math.abs(t) < .35);
+    }
+  }
+
+  /* ---- Active nav: cards by snap index, sections by viewport middle ---- */
+  function markActive(scrollY){
+    var idx;
+    if (scrollY < (CARD_N - .5) * vh()){
+      idx = Math.max(0, Math.min(CARD_N - 1, Math.round(scrollY / vh())));
+    } else {
+      idx = CARD_N;
+      for (var i = 0; i < sects.length; i++){
+        if (sects[i].getBoundingClientRect().top < window.innerHeight * .5) idx = CARD_N + i;
+      }
+    }
+    navBtns.forEach(function(b, i){ b.classList.toggle("active", NAV[i].activeWhen(idx)); });
+    dotBtns.forEach(function(b, i){ b.classList.toggle("active", i === idx); });
+  }
+
+  /* ---- Main loop ---- */
+  var nebEl = document.querySelector(".nebula");
+  var hintEl = document.getElementById("hint");
+  var smooth = 0, lastSmooth = 0, idle = 0;
+  var travelAccum = 0, lastPosTravel = 0;   // star warp accumulates absolute motion → always forward
+  var FORCE = null;                     // debug: pin scrollY (in px) for headless checks
+  /* debug: #f=<viewports> in the URL pins the timeline (e.g. #f=1 docks card 1) */
+  var hashF = (location.hash.match(/f=([\d.]+)/) || [])[1];
+  var FORCE_VH = hashF ? parseFloat(hashF) : null;
+  function update(){
+    if (window.innerWidth && (window.innerWidth !== W || window.innerHeight !== H)) buildStars();
+    if (FORCE_VH != null) FORCE = FORCE_VH * vh();
+    var y = FORCE != null ? FORCE : window.scrollY;
+    if (FORCE != null) smooth = FORCE;
+    smooth += (y - smooth) * .12;       // scrub easing
+    if (Math.abs(y - smooth) < .25) smooth = y;
+    var velocity = smooth - lastSmooth;
+    lastSmooth = smooth;
+    idle += .00012;
+
+    var v = vh();
+    var sv = smooth / v;                // viewport units
+    var cardSpan = CARD_N;              // card phase ends at 3 viewports
+    /* position-derived travel, then accumulate its ABSOLUTE change so scrolling
+       either direction reads as flying forward through space (Gary 2026-06-19) */
+    var posTravel = (Math.min(sv, cardSpan) * RATE_CARD)
+                  + (Math.max(0, sv - cardSpan) * RATE_MAIN);
+    travelAccum += Math.abs(posTravel - lastPosTravel);
+    lastPosTravel = posTravel;
+    var travel = travelAccum + idle * Z_MAX;
+    paintStars(travel, Math.abs(velocity) / v * RATE_CARD);
+    placeCards(sv);
+    markActive(y);
+
+    var ms = docEl.scrollHeight - window.innerHeight;
+    var p = ms > 0 ? smooth / ms : 0;
+    nebEl.style.setProperty("--neb-hue", (p * 40).toFixed(1) + "deg");
+    nebEl.style.setProperty("--neb-sat", (1.1 + p * .6).toFixed(3));
+    hintEl.style.opacity = smooth > v * .05 ? 0 : 1;
+  }
+  function frame(){
+    update();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---- Frosted reveal for the normal section ---- */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.25, rootMargin: "0px 0px -60px 0px" });
+  document.querySelectorAll(".fr").forEach(function(el){ io.observe(el); });
+
+  buildStars();
+  var rT;
+  window.addEventListener("resize", function(){
+    clearTimeout(rT); rT = setTimeout(function(){ buildStars(); update(); }, 150);
+  });
+  /* rAF pauses in background tabs — snap to position when we come back */
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden){ smooth = FORCE != null ? FORCE : window.scrollY; update(); }
+  });
+  window.__update = update; // debug hooks: drive the timeline without rAF
+  window.__force = function(px){ FORCE_VH = null; FORCE = (typeof px === "number") ? px : null; update(); };
+  update();                 // synchronous first paint — no blank frame before rAF starts
+  smooth = FORCE != null ? FORCE : window.scrollY;
+  update();
+  /* timed repaints cover tabs that load hidden (rAF parked, sizes arrive late) */
+  [250, 1000, 2500].forEach(function(ms){
+    setTimeout(function(){ smooth = FORCE != null ? FORCE : window.scrollY; update(); }, ms);
+  });
+
+  /* deep link: an incoming #<sectionId> (e.g. the coming-soon page's "Talk to us"
+     → index.html#contact) jumps to that section once layout has settled. Ignores
+     the debug #f= hash; an empty hash still opens on the intro card. */
+  (function(){
+    var id = location.hash.slice(1);
+    if (!id || /^f=/.test(id)) return;
+    for (var i = 0; i < targets.length; i++){
+      if (targets[i].id === id){ (function(idx){ setTimeout(function(){ jumpTo(idx); }, 120); })(i); break; }
+    }
+  })();
+
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+/* ============ How-it-works animation module (ported from the standalone mockup v4) ============
+   ONE rAF clock; every frame derives the full state from (appIndex, t).
+   Plays only while the band is in view; first cycle full pace, later rounds ~15% quicker (Gary). */
+(function(){
+  "use strict";
+
+  /* the five apps that travel the stage — the tray shows exactly these,
+     so nothing reads as "missing"; the full app list lives in Section 2 */
+  var APPS = [
+    { name:"hearing protection", bg:"bg-0", dot:"#a855f7",
+      glyph:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>' },
+    { name:"hearing correction", bg:"bg-1", dot:"#ff9e00",
+      glyph:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3.5 5.5S13 17 13 19a2.5 2.5 0 0 1-5 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0"/></svg>' },
+    { name:"spatial audio", bg:"bg-2", dot:"#ec4899",
+      glyph:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="2.6"/><path d="M5.5 5.5a9.2 9.2 0 0 0 0 13"/><path d="M18.5 5.5a9.2 9.2 0 0 1 0 13"/></svg>' },
+    { name:"EQ", bg:"bg-3", dot:"#fbbf24",
+      glyph:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M5 5v14M12 5v14M19 5v14"/><circle cx="5" cy="10" r="2.2" fill="#fff" stroke="none"/><circle cx="12" cy="15" r="2.2" fill="#fff" stroke="none"/><circle cx="19" cy="8" r="2.2" fill="#fff" stroke="none"/></svg>' },
+    { name:"noise reduction", bg:"bg-4", dot:"#7c3aed",
+      glyph:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0" opacity=".45"/><path d="M3 12h18"/></svg>' }
+  ];
+
+  /* ---- stage geometry (viewBox units) ---- */
+  /* viewBox is cropped to "0 64 880 250" (dead space trimmed top/bottom so the bigger
+     app names fit when the section snaps in); VB_Y0 offsets the traveler's y-mapping to match */
+  var VB_W = 880, VB_H = 250, VB_Y0 = 64, BASE_W = 866;   /* traveler is sized for an 866px stage; scales with it */
+  var Y_FLOW = 166;
+  var P_CLOUD  = {x:150, y:118};
+  var P_SCREEN = {x:440, y:150};
+  var P_DOCK   = {x:688, y:Y_FLOW};
+  var SCREEN_SCALE = .72;
+
+  /* ---- timeline (ms within one app's cycle) ---- */
+  var T_POP_END = 600, T_GLIDE1_END = 3000, T_DL_END = 4100, T_BEAT_END = 4400,
+      T_GLIDE2_END = 6900, T_ABSORB2_END = 7300, T_HOLD_END = 8600;
+  var CYCLE = T_HOLD_END;
+  /* a stage lights the moment the icon ARRIVES in it, not when it leaves (Ollie 2026-06-13):
+     cloud at pop-in, phone when it lands on screen, ears when it reaches the bud */
+  var STEP1_LIT = T_POP_END, STEP2_LIT = T_GLIDE1_END, STEP3_LIT = T_GLIDE2_END;
+  /* outro runs at 1× (see frame loop) so the closing line lingers ~6s for reading (Ollie 2026-06-13) */
+  var OUTRO_MSG_END = 6200, OUTRO_CLEAR_END = 6200, OUTRO = 6800;
+
+  var stage = document.getElementById("animStage");
+  var traveler = document.getElementById("animTraveler");
+  var caption = document.getElementById("animCaption");
+  var tray = document.getElementById("animTray");
+  var dlGroup = document.getElementById("animDl");
+  var dlBar = document.getElementById("animDlBar");
+  var bud = document.getElementById("animBud");
+  var dotsG = document.getElementById("animDots");
+  var steps = [document.getElementById("animStep1"), document.getElementById("animStep2"), document.getElementById("animStep3")];
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  /* tray: the five traveling apps, dim until installed */
+  var chips = APPS.map(function(app){
+    var c = document.createElement("span");
+    c.className = "chip";
+    c.innerHTML = '<span class="ic ' + app.bg + '">' + app.glyph + '</span>' + app.name;
+    tray.appendChild(c);
+    return c;
+  });
+
+  /* one colored dot per animated app, clustered in the bud head */
+  var DOT_POS = [[730,147],[740.5,154.6],[736.5,166.9],[723.5,166.9],[719.5,154.6]];
+  var dots = APPS.map(function(app, i){
+    var d = document.createElementNS(SVG_NS, "circle");
+    d.setAttribute("class", "app-dot");
+    d.setAttribute("cx", DOT_POS[i][0]); d.setAttribute("cy", DOT_POS[i][1]);
+    d.setAttribute("r", 4); d.setAttribute("fill", app.dot);
+    dotsG.appendChild(d);
+    return d;
+  });
+
+  function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function easeInOut(p){ return p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3)/2; }
+  function easeOut(p){ return 1 - Math.pow(1 - p, 3); }
+  function lerp(a, b, p){ return a + (b - a) * p; }
+  function seg(t, a, b){ return clamp01((t - a) / (b - a)); }
+
+  var appIndex = 0, t = 0, inOutro = false;
+  var lastCaption = "", lastApp = -1, pulsedFor = -1;
+
+  function setCaption(html){
+    if (html !== lastCaption){ caption.innerHTML = html || "&nbsp;"; lastCaption = html; }
+  }
+  function setApp(i){
+    if (i !== lastApp){
+      traveler.className = "traveler " + APPS[i].bg;
+      traveler.innerHTML = APPS[i].glyph;
+      lastApp = i;
+    }
+  }
+  function paintTraveler(x, y, scale, opacity){
+    var r = stage.getBoundingClientRect();
+    if (!r.width) return;
+    var sizeF = r.width / BASE_W;                  /* keep the icon proportional to the stage */
+    var px = x / VB_W * r.width, py = (y - VB_Y0) / VB_H * r.height;
+    traveler.style.transform = "translate(" + (px - 26) + "px," + (py - 26) + "px) scale(" + (scale * sizeF).toFixed(3) + ")";
+    traveler.style.opacity = opacity.toFixed(3);
+  }
+  function syncCollected(){
+    for (var k = 0; k < APPS.length; k++){
+      var on = inOutro ? (t < OUTRO_CLEAR_END)
+             : (k < appIndex || (k === appIndex && t >= T_ABSORB2_END - 200));
+      chips[k].classList.toggle("on", on);
+      dots[k].classList.toggle("on", on);
+    }
+  }
+  function syncSteps(){
+    var done = inOutro
+      ? [t < OUTRO_CLEAR_END, t < OUTRO_CLEAR_END, t < OUTRO_CLEAR_END]
+      : [t >= STEP1_LIT, t >= STEP2_LIT, t >= STEP3_LIT];
+    steps.forEach(function(s, i){ s.classList.toggle("done", done[i]); });
+  }
+  function firePulse(){
+    if (pulsedFor === appIndex) return;
+    pulsedFor = appIndex;
+    bud.classList.remove("bud-lit");
+    void bud.getBoundingClientRect();
+    bud.classList.add("bud-lit");
+  }
+
+  function render(){
+    if (inOutro){
+      paintTraveler(P_DOCK.x, P_DOCK.y, 1, 0);
+      dlGroup.setAttribute("opacity", 0);
+      setCaption(t < OUTRO_MSG_END ? "years after you bought it — <b>still gaining abilities</b>" : "");
+      if (t >= OUTRO_CLEAR_END) bud.classList.remove("bud-lit");
+      syncCollected(); syncSteps();
+      return;
+    }
+    var app = APPS[appIndex];
+    setApp(appIndex);
+    var x = P_CLOUD.x, y = P_CLOUD.y, scale = 1, op = 0, dl = -1;
+
+    if (t < T_POP_END){
+      var p = easeOut(seg(t, 0, T_POP_END));
+      scale = lerp(.5, 1, p); op = p;
+    } else if (t < T_GLIDE1_END){
+      var p1 = easeInOut(seg(t, T_POP_END, T_GLIDE1_END));
+      x = lerp(P_CLOUD.x, P_SCREEN.x, p1); y = lerp(P_CLOUD.y, P_SCREEN.y, p1);
+      scale = lerp(1, SCREEN_SCALE, p1); op = 1;
+    } else if (t < T_DL_END){
+      x = P_SCREEN.x; y = P_SCREEN.y; scale = SCREEN_SCALE; op = 1;
+      dl = easeInOut(seg(t, T_GLIDE1_END, T_DL_END));
+    } else if (t < T_BEAT_END){
+      x = P_SCREEN.x; y = P_SCREEN.y; scale = SCREEN_SCALE; op = 1; dl = 1;
+    } else if (t < T_GLIDE2_END){
+      var p4 = easeInOut(seg(t, T_BEAT_END, T_GLIDE2_END));
+      x = lerp(P_SCREEN.x, P_DOCK.x, p4);
+      y = lerp(P_SCREEN.y, P_DOCK.y, Math.min(1, p4 * 2.5));
+      scale = lerp(SCREEN_SCALE, 1, Math.min(1, p4 * 3)); op = 1;
+    } else if (t < T_ABSORB2_END){
+      var p5 = easeOut(seg(t, T_GLIDE2_END, T_ABSORB2_END));
+      x = lerp(P_DOCK.x, P_DOCK.x + 18, p5); y = P_DOCK.y;
+      scale = lerp(1, .4, p5); op = 1 - p5;
+      firePulse();
+    } else {
+      op = 0;
+    }
+
+    paintTraveler(x, y, scale, op);
+    dlGroup.setAttribute("opacity", dl >= 0 ? 1 : 0);
+    if (dl >= 0) dlBar.setAttribute("width", (dl * 60).toFixed(1));
+    setCaption("<b>" + app.name + "...</b>");
+    syncCollected(); syncSteps();
+  }
+
+  /* ---- reduced motion: static end state ---- */
+  if (reduceMotion){
+    chips.forEach(function(c){ c.classList.add("on"); });
+    dots.forEach(function(d){ d.classList.add("on"); });
+    steps.forEach(function(s){ s.classList.add("done"); });
+    caption.innerHTML = "apps download through your phone into your ears";
+    return;
+  }
+
+  /* ---- the clock: runs only while the band is in view ---- */
+  var inView = false, journeys = 0, lastTs = null;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ inView = e.isIntersecting; });
+  }, { threshold: 0.25 });
+  io.observe(stage);
+
+  function frame(ts){
+    if (lastTs == null) lastTs = ts;
+    var dt = ts - lastTs;
+    lastTs = ts;
+    if (dt > 200) dt = 16;              /* hidden tab / blurred panel: pause, don't skip */
+    if (inView){
+      /* apps run at a quick pace; the closing outro runs at 1× so the last line lingers (Ollie/Gary) */
+      t += dt * (inOutro ? 1 : 2.5);
+      if (inOutro){
+        if (t >= OUTRO){ inOutro = false; appIndex = 0; t = 0; pulsedFor = -1; }
+      } else if (t >= CYCLE){
+        t = 0; journeys++;
+        if (appIndex + 1 < APPS.length){ appIndex++; }
+        else { inOutro = true; }
+      }
+      render();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* debug: seek to an exact (app, ms) point and freeze (strip for production) */
+  window.__animSeek = function(i, ms){
+    io.disconnect(); inView = false;
+    inOutro = false; appIndex = i; pulsedFor = -1; t = ms;
+    render();
+  };
+
+  render();
+  requestAnimationFrame(frame);
+})();
+
+/* ============ Ecosystem flywheel ============
+   One rAF clock; render(t) is a pure function of the timeline (same
+   pattern as the how-it-works band — no chained timers + CSS transitions).
+   A momentum orb circles the loop; each node glows + pulses as it passes. */
+(function(){
+  var stage = document.getElementById("flyStage");
+  if (!stage) return;
+  var arc = document.getElementById("flyArc");
+  var token = document.getElementById("flyToken");
+  var CX = 330, CY = 250, R = 140;
+  var HUB = { x: CX, y: CY };
+  /* nodes, clockwise from top: developers(0) → makers(90) → listeners(180) → suppliers(270) */
+  var NODES = [0, 90, 180, 270].map(function(ang, i){
+    return { ang: ang, armed: true, firedAt: -1,
+             node: document.getElementById("flyNode-" + i),
+             spoke: document.getElementById("flySpoke-" + i),
+             charge: document.getElementById("flyCharge-" + i) };
+  });
+  var REV = 11000;   /* ms per full revolution */
+  var ARCDEG = 52;   /* length of the comet trail, in degrees */
+  var NEAR = 30;     /* node glows while the orb is within this many degrees */
+  var FIRE = 9;      /* one-shot pulse fires at closest approach */
+  var CHARGE_MS = 750;  /* how long the value pulse takes to reach the hub */
+
+  function polar(ang){
+    var a = (ang - 90) * Math.PI / 180;
+    return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
+  }
+  function arcPath(a0, a1){
+    var p0 = polar(a0), p1 = polar(a1);
+    return "M" + p0.x.toFixed(1) + " " + p0.y.toFixed(1) +
+           " A" + R + " " + R + " 0 0 1 " + p1.x.toFixed(1) + " " + p1.y.toFixed(1);
+  }
+  function angDist(a, b){ return Math.abs(((a - b) % 360 + 540) % 360 - 180); }
+  function firePulse(n){
+    n.node.classList.remove("pulse");
+    void n.node.getBoundingClientRect();   /* restart the one-shot ring animation */
+    n.node.classList.add("pulse");
+  }
+
+  function render(t){
+    var ang = (t / REV * 360) % 360;
+    var p = polar(ang);
+    token.setAttribute("transform", "translate(" + p.x.toFixed(1) + "," + p.y.toFixed(1) + ")");
+    arc.setAttribute("d", arcPath(ang - ARCDEG, ang));
+    NODES.forEach(function(n){
+      var d = angDist(ang, n.ang);
+      n.node.classList.toggle("near", d < NEAR);
+      n.spoke.classList.toggle("active", d < NEAR);
+      if (d < FIRE){ if (n.armed){ firePulse(n); n.firedAt = t; n.armed = false; } }
+      else if (d > NEAR){ n.armed = true; }
+      /* value pulse rides the spoke from the node into the hub */
+      var since = t - n.firedAt;
+      if (n.firedAt >= 0 && since >= 0 && since <= CHARGE_MS){
+        var prog = since / CHARGE_MS;
+        var e = 1 - Math.pow(1 - prog, 2);          /* easeOut toward the hub */
+        var np = polar(n.ang);
+        n.charge.setAttribute("cx", (np.x + (HUB.x - np.x) * e).toFixed(1));
+        n.charge.setAttribute("cy", (np.y + (HUB.y - np.y) * e).toFixed(1));
+        n.charge.setAttribute("opacity", (1 - prog).toFixed(2));
+      } else {
+        n.charge.setAttribute("opacity", 0);
+      }
+    });
+  }
+
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion){                       /* static end state, no loop */
+    var p0 = polar(0);
+    token.setAttribute("transform", "translate(" + p0.x + "," + p0.y + ")");
+    arc.setAttribute("d", arcPath(-ARCDEG, 0));
+    NODES.forEach(function(n){ n.node.classList.add("near"); n.spoke.classList.add("active"); });
+    return;
+  }
+
+  var inView = false, t = 0, lastTs = null;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ inView = e.isIntersecting; });
+  }, { threshold: 0.25 });
+  io.observe(stage);
+
+  function frame(ts){
+    if (lastTs == null) lastTs = ts;
+    var dt = ts - lastTs; lastTs = ts;
+    if (dt > 200) dt = 16;                 /* hidden tab / blurred panel: pause, don't skip */
+    if (inView){ t += dt; render(t); }
+    requestAnimationFrame(frame);
+  }
+
+  /* debug: seek to an exact ms and freeze (strip for production) */
+  window.__flySeek = function(ms){ io.disconnect(); inView = false; t = ms; render(t); };
+
+  render(0);
+  requestAnimationFrame(frame);
+})();
+
+/* ============ Headphone 1.0 → 2.0 → 3.0 arc strip (Problem card) ============
+   Pure-SVG (viewBox units) so geometry is independent of the card's rendered
+   size while it zooms. Plays only while #c1 is docked (.live); restarts on each
+   visit. Same rAF/pure-render pattern as the other animations. */
+(function(){
+  var stage = document.getElementById("arcStage");
+  if (!stage) return;
+  var arc  = document.getElementById("arcProg");
+  var orb  = document.getElementById("arcOrb");
+  var svg  = stage.querySelector("svg");
+  var cap  = document.getElementById("arcCaption");
+  var card = document.getElementById("c2");
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var DRAW_END = 5400, HOLD_END = 8400, CYCLE = 9300, NODE_RISE = 70, RING_MS = 720;
+  var DROP_FALL = 820, DROP_GAP = 520, DROP_STAGGER = 440, DROP_X = [-9, 3, 11];
+
+  var nodes = [
+    {frac:.12, pos:"arcDev0pos", dev:"arcDev0", lbl:"arcLbl0", sub:"arcSub0", mk:"arcMk0", ring:"arcRing0", name:"Headphone 1.0"},
+    {frac:.50, pos:"arcDev1pos", dev:"arcDev1", lbl:"arcLbl1", sub:"arcSub1", mk:"arcMk1", ring:"arcRing1", name:"Headphone 2.0"},
+    {frac:.90, pos:"arcDev2pos", dev:"arcDev2", lbl:"arcLbl2", sub:"arcSub2", mk:"arcMk2", ring:"arcRing2", name:"Headphone 3.0"}
+  ];
+  var lastCap = "";
+  function setCap(html){ if (cap && html !== lastCap){ cap.innerHTML = html; lastCap = html; } }
+  var L = 0;
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function easeInOut(x){ return x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2; }
+  function easeOut(x){ return 1-Math.pow(1-x,3); }
+  function arrivalTime(frac){ var lo=0,hi=DRAW_END; for(var i=0;i<40;i++){ var m=(lo+hi)/2; if(easeInOut(m/DRAW_END)<frac) lo=m; else hi=m; } return (lo+hi)/2; }
+  nodes.forEach(function(n){ n.arriveT = arrivalTime(n.frac); });
+
+  function layout(){
+    L = arc.getTotalLength();
+    if (!L) return;
+    arc.style.strokeDasharray = L;
+    nodes.forEach(function(n){
+      var pt = arc.getPointAtLength(L*n.frac);
+      n.len = L*n.frac;
+      function set(id,a,v){ document.getElementById(id).setAttribute(a,v); }
+      document.getElementById(n.pos).setAttribute("transform","translate("+pt.x.toFixed(1)+","+(pt.y-NODE_RISE).toFixed(1)+")");
+      set(n.mk,"cx",pt.x); set(n.mk,"cy",pt.y);
+      set(n.ring,"cx",pt.x); set(n.ring,"cy",pt.y);
+      set(n.lbl,"x",(pt.x+10).toFixed(1)); set(n.lbl,"y",(pt.y+34).toFixed(1));
+      set(n.sub,"x",(pt.x+10).toFixed(1)); set(n.sub,"y",(pt.y+52).toFixed(1));
+    });
+  }
+
+  function render(t){
+    if (!L){ layout(); if(!L) return; }
+    var fade = t>=HOLD_END ? (1-clamp((t-HOLD_END)/(CYCLE-HOLD_END),0,1)) : 1;
+    svg.style.opacity = fade.toFixed(3);
+    var p = easeInOut(clamp(t/DRAW_END,0,1));
+    var drawn = L*p;
+    arc.style.strokeDashoffset = (L-drawn).toFixed(1);
+    var head = arc.getPointAtLength(Math.min(drawn,L));
+    orb.setAttribute("transform","translate("+head.x.toFixed(1)+","+head.y.toFixed(1)+")");
+    orb.style.opacity = (t<DRAW_END ? 1 : clamp(1-(t-DRAW_END)/450,0,1)).toFixed(3);
+    var arrived = -1;
+    nodes.forEach(function(n,i){
+      var a = easeOut(clamp((drawn-n.len)/(L*0.05),0,1));
+      var dev = document.getElementById(n.dev);
+      dev.style.opacity = a.toFixed(3);
+      dev.style.transform = "scale("+(0.62+0.38*a).toFixed(3)+")";
+      var lit = drawn>=n.len;
+      if (lit) arrived = i;
+      document.getElementById(n.mk).style.fill = lit ? "var(--text-acc)" : "var(--graph-soft)";
+      var lab = document.getElementById(n.lbl); lab.style.opacity = a.toFixed(3); lab.style.fill = "var(--text-acc)";
+      var sub = document.getElementById(n.sub); sub.style.opacity = a.toFixed(3); sub.style.fill = "var(--muted)";
+      var rt = (t-n.arriveT)/RING_MS;
+      var ring = document.getElementById(n.ring);
+      if (rt>0 && rt<1){ ring.style.opacity = (Math.sin(rt*Math.PI)*0.8).toFixed(3); ring.setAttribute("r",(8+34*rt).toFixed(1)); }
+      else ring.style.opacity = 0;
+    });
+    var pd = t-DRAW_END;
+    for (var i=0;i<3;i++){
+      var g = document.getElementById("arcDrop"+i);
+      var ph = pd - i*DROP_STAGGER;
+      if (t<=DRAW_END || ph<0){ g.style.opacity = 0; continue; }
+      var cyc = ph % (DROP_FALL+DROP_GAP);
+      if (cyc>DROP_FALL){ g.style.opacity = 0; continue; }
+      var f = cyc/DROP_FALL;
+      var y = -24 + 28*(f*f);
+      g.setAttribute("transform","translate("+DROP_X[i]+","+y.toFixed(1)+")");
+      g.style.opacity = (f<0.12 ? f/0.12 : f>0.82 ? (1-f)/0.18 : 1).toFixed(3);
+    }
+
+    // caption tracks the current era; 3.0 lands the payoff line
+    if (arrived < 0) setCap("");
+    else if (arrived === 2 && t > DRAW_END+250) setCap("<b>Headphone 3.0</b>&nbsp;&mdash; the appable hearing computer.");
+    else setCap("<b>"+nodes[arrived].name+"</b>");
+  }
+
+  layout();
+  if (reduceMotion){ render(DRAW_END+450); return; }   /* static resolved state */
+
+  /* clock advances only while the Problem card is docked; restarts each visit */
+  var clock = 0, lastTs = null, wasLive = false;
+  function frame(ts){
+    if (lastTs == null) lastTs = ts;
+    var dt = ts - lastTs; lastTs = ts;
+    if (dt > 200) dt = 16;
+    var live = card.classList.contains("live");
+    if (live){
+      if (!wasLive) clock = 0;          /* fresh play when you land on the card */
+      clock = (clock + dt) % CYCLE;
+      render(clock);
+    } else if (wasLive){
+      clock = 0; render(0);             /* reset once on leaving */
+    }
+    wasLive = live;
+    requestAnimationFrame(frame);
+  }
+  render(0);
+  requestAnimationFrame(frame);
+  window.addEventListener("resize", function(){ layout(); render(clock); });
+  window.__arcSeek = function(ms){ clock = ((ms%CYCLE)+CYCLE)%CYCLE; render(clock); };  /* debug; strip for prod */
+})();
+
+/* ============ Contact form → HubSpot (with email fallback) ============
+   Keeps the custom-styled form and posts straight to HubSpot using the
+   non-JS Forms submission endpoint — contacts land in HubSpot, no backend.
+   TO GO LIVE WITH HUBSPOT: create a form in HubSpot (fields: email, firstname,
+   lastname, and the field named in REASON_FIELD), paste its GUID into FORM_GUID.
+   Portal 143819223 sits in the EU1 data centre, hence api-eu1.
+   Until a GUID is set (or if the request fails), the form opens a pre-filled
+   email to info@sonical.ai so a submission is never lost. */
+(function(){
+  "use strict";
+  var form = document.getElementById("contactForm");
+  if (!form) return;
+  var nameEl = document.getElementById("cfName");
+  var emailEl = document.getElementById("cfEmail");
+  var statusEl = document.getElementById("cfStatus");
+  var btn = form.querySelector("button[type=submit]");
+
+  var PORTAL_ID  = "143819223";
+  var FORM_GUID  = "53a31470-a605-47e5-a1aa-2c6d013dc262";   /* HubSpot form GUID — native capture live */
+  var REASON_FIELD = "reason_for_interest";  /* HubSpot custom multi-checkbox property (options must match the checkbox values exactly) */
+  var INBOX = "info@sonical.ai";
+  var ENDPOINT = "https://api-eu1.hsforms.com/submissions/v3/integration/submit/" + PORTAL_ID + "/" + FORM_GUID;
+
+  function setStatus(msg, kind){
+    statusEl.textContent = msg;
+    statusEl.className = "form-status" + (kind ? " " + kind : "");
+  }
+  function reasons(){
+    return Array.prototype.slice.call(form.querySelectorAll("input[name=reason]:checked"))
+      .map(function(c){ return c.value; });
+  }
+  function validEmail(v){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v); }
+
+  function mailtoFallback(name, email, rs){
+    var body = "Name: " + name + "\nEmail: " + email +
+               "\n\nReason(s) for interest:\n" + (rs.length ? "- " + rs.join("\n- ") : "(none selected)");
+    window.location.href = "mailto:" + INBOX +
+      "?subject=" + encodeURIComponent("Website enquiry — " + name) +
+      "&body=" + encodeURIComponent(body);
+    setStatus("Opening your email app to send your message…", "ok");
+  }
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = nameEl.value.trim();
+    var email = emailEl.value.trim();
+    if (!name){ setStatus("Please add your name.", "err"); nameEl.focus(); return; }
+    if (!validEmail(email)){ setStatus("Please add a valid email.", "err"); emailEl.focus(); return; }
+    var rs = reasons();
+
+    if (!FORM_GUID){ mailtoFallback(name, email, rs); return; }
+
+    btn.disabled = true; setStatus("Sending…");
+    var parts = name.split(/\s+/);
+    var fields = [
+      { name: "email", value: email },
+      { name: "firstname", value: parts[0] },
+      { name: "lastname", value: parts.slice(1).join(" ") },
+      { name: REASON_FIELD, value: rs.join(";") }   /* multi-checkbox: semicolon-separated, no spaces */
+    ].filter(function(f){ return f.value; });
+
+    function postToHubspot(ip){
+      var context = { pageName: "Sonical homepage", pageUri: location.href };
+      if (ip) context.ipAddress = ip;   /* lets HubSpot record geo/analytics for the submission */
+      return fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: fields, context: context })
+      });
+    }
+
+    /* grab the visitor's public IP (best-effort) so HubSpot's form analytics aren't blind */
+    fetch("https://api.ipify.org?format=json")
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(d){ return postToHubspot(d && d.ip); })
+      .then(function(r){
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        form.reset();
+        setStatus("Thanks! We got your submission. We'll be in touch soon!", "ok");
+      })
+      .catch(function(){
+        mailtoFallback(name, email, rs);   /* network/HubSpot hiccup → don't lose the lead */
+      })
+      .then(function(){ btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+[build]
+  # Static site — no build step. This overrides the old Astro build config.
+  command = "echo 'no build needed — static site'"
+  publish = "."
