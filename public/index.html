@@ -664,7 +664,7 @@
       <p class="lede">The smartphone put a computer in your pocket. We&rsquo;ve built one for your ears.</p>
       <p class="sub">Sonical builds CosmOS, the operating system for the ears.</p>
       <div class="ctarow">
-        <button class="btn btn-primary">Talk to us</button>
+        <button class="btn btn-primary cta-contact" type="button">Talk to us</button>
       </div>
     </div>
   </section>
@@ -1026,7 +1026,7 @@
         <h2>Want to build <span class="acc">on CosmOS?</span></h2>
         <p class="lede">The SDK is invitation-only for now. Tell us what you want to build and we&rsquo;ll go from there.</p>
         <div class="ctarow">
-          <button class="btn btn-ghost">Talk to us →</button>
+          <button class="btn btn-ghost cta-contact" type="button">Talk to us →</button>
         </div>
       </div>
     </section>
@@ -1425,6 +1425,11 @@
       if (targets[i].id === id){ (function(idx){ setTimeout(function(){ jumpTo(idx); }, 120); })(i); break; }
     }
   })();
+
+  /* in-page "Talk to us" CTAs (intro card + developers section) jump to the contact form */
+  Array.prototype.forEach.call(document.querySelectorAll(".cta-contact"), function(b){
+    b.addEventListener("click", function(e){ e.preventDefault(); jumpTo(contactIdx); });
+  });
 
   requestAnimationFrame(frame);
 })();
