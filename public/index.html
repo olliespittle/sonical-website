@@ -1320,6 +1320,10 @@
         s = FOV / (FOV - zz);
         op = Math.max(0, 1 - t / .55);
         oy = t * H * .12;
+        if (W <= 760){            // mobile: a 94vw card scaled up overflows the narrow
+          s = Math.min(s, 1.04);  // viewport and clips its text on both edges, so cap the
+          op = Math.max(0, 1 - t / .30);  // zoom; and fade out sooner so the card fully clears
+        }                         // before the content section rises in (kills the overlap)
       }
       el.style.opacity = op.toFixed(3);
       el.style.transform = "translate(-50%,-50%) translate3d(" + ox.toFixed(1) + "px," + oy.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
