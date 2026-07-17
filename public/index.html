@@ -182,11 +182,11 @@
   /* ============ Normal scrolling phase: one giant frosted card ============ */
   main{
     position:relative;z-index:2;
-    scroll-snap-align:start;
-    scroll-snap-stop:always;   /* a hard fling from card 3 clicks in at the top of the page instead of sailing past section 1 */
-    /* footer lives INSIDE main (below .mega) so it's part of this oversized snap area —
-       the snap keeps main covering the viewport, so the bottom settles ON the footer
-       instead of trapping it (which happened when the footer was a sibling after main). */
+    /* main is intentionally NOT a snap target. Snapping is mandatory only through the
+       card phase and switched off for the whole content section + footer (see the
+       snapFree toggle), so the tall content scrolls freely: no recoil at the footer,
+       no snap wall at the top of the content, and scrolling back up lands cleanly on
+       card 3 instead of getting trapped at the content top. */
     padding:72px 0 0;          /* first section sits just below the 64px nav; footer carries its own bottom padding */
   }
   .mega{
@@ -1321,9 +1321,9 @@
         op = Math.max(0, 1 - t / .55);
         oy = t * H * .12;
         if (W <= 760){            // mobile: a 94vw card scaled up overflows the narrow
-          s = Math.min(s, 1.04);  // viewport and clips its text on both edges, so cap the
-          op = Math.max(0, 1 - t / .30);  // zoom; and fade out sooner so the card fully clears
-        }                         // before the content section rises in (kills the overlap)
+          s = Math.min(s, 1.04);  // viewport and clips its text both edges — cap the zoom, and
+          op = Math.max(0, 1 - t / .40);  // fade a touch sooner so it clears before content rises
+        }
       }
       el.style.opacity = op.toFixed(3);
       el.style.transform = "translate(-50%,-50%) translate3d(" + ox.toFixed(1) + "px," + oy.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
@@ -1371,15 +1371,14 @@
     var v = vh();
     var sv = smooth / v;                // viewport units
     var cardSpan = CARD_N;              // card phase ends at 3 viewports
-    /* Snap stays mandatory through the card phase (crisp 1→2→3 and the hard-fling
-       guard that docks card 3 at the top of main, which sits at sv=3). The instant
-       we're past main-start, switch snapping off so the oversized main + footer
-       scroll freely — mandatory snap on that oversized area recoiled to the top at
-       the footer. The band is kept tight (on 3.08 / off 3.0) so entering the content
-       doesn't fight the main-start snap; a wide band made the hand-off feel sluggish.
-       Snap only re-enables at/above main-start, where a re-snap is wanted. */
-    if (!snapFree && sv >= 3.08){ snapFree = true; docEl.classList.add("free"); }
-    else if (snapFree && sv <= 3.0){ snapFree = false; docEl.classList.remove("free"); }
+    /* Snapping is mandatory ONLY through the card phase, then off for everything from
+       the card-3 hand-off onward (content section + footer). Switching at the card/
+       content boundary (~sv 2.25) — NOT at main-start (sv 3) — is what keeps it clean:
+       content + footer scroll freely (no recoil, no sluggish hand-off) and scrolling
+       back up lands smoothly on card 3 rather than a snap wall at the content top.
+       Hysteresis: off below 2.15 so cards 0–2 snap crisply, free above 2.35. */
+    if (!snapFree && sv >= 2.35){ snapFree = true; docEl.classList.add("free"); }
+    else if (snapFree && sv <= 2.15){ snapFree = false; docEl.classList.remove("free"); }
     /* position-derived travel, then accumulate its ABSOLUTE change so scrolling
        either direction reads as flying forward through space (Gary 2026-06-19) */
     var posTravel = (Math.min(sv, cardSpan) * RATE_CARD)
