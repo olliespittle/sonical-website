@@ -84,6 +84,12 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-snap-type:y mandatory}
   html.flat{scroll-snap-type:none}
+  /* mobile stacked layout: gentle per-card snap. PROXIMITY, not mandatory — the
+     content sections + footer must still scroll freely; mandatory would recoil at
+     the card/content edge (the bug the old 3D layout had). Cards only; the class is
+     set on mobile only, so reduced-motion users keep a plain, non-snapping page. */
+  html.flat.snap-cards{scroll-snap-type:y proximity;scroll-padding-top:76px}
+  html.snap-cards #cardStage .card{scroll-snap-align:start}
   body{
     background:var(--bg-0);color:var(--ink);
     font-family:var(--font-body);font-size:16px;line-height:1.6;
@@ -1239,6 +1245,7 @@
     document.body.classList.add("flat");
     navBtns[0].classList.add("active");
     if (reduceMotion) return;   // reduced-motion = fully static; mobile keeps animating
+    docEl.classList.add("snap-cards");   // mobile: gentle proximity card-snap (CSS above)
   }
 
   /* ---- Starfield: 3D warp tied to scroll ---- */
