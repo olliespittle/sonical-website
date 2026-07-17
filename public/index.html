@@ -1368,12 +1368,13 @@
     var sv = smooth / v;                // viewport units
     var cardSpan = CARD_N;              // card phase ends at 3 viewports
     /* Snap stays mandatory through the card phase (crisp 1→2→3 and the hard-fling
-       guard that docks card 3 at the top of main). Once we're safely into the
-       content section, switch snapping off so the oversized main + footer scroll
-       freely — mandatory snap on that oversized area recoiled to the top when you
-       reached the footer. Hysteresis (3.5 on / 3.0 off) avoids flicker at the edge;
-       snap only ever re-enables at/above main-start, where a re-snap is wanted. */
-    if (!snapFree && sv >= 3.5){ snapFree = true; docEl.classList.add("free"); }
+       guard that docks card 3 at the top of main, which sits at sv=3). The instant
+       we're past main-start, switch snapping off so the oversized main + footer
+       scroll freely — mandatory snap on that oversized area recoiled to the top at
+       the footer. The band is kept tight (on 3.08 / off 3.0) so entering the content
+       doesn't fight the main-start snap; a wide band made the hand-off feel sluggish.
+       Snap only re-enables at/above main-start, where a re-snap is wanted. */
+    if (!snapFree && sv >= 3.08){ snapFree = true; docEl.classList.add("free"); }
     else if (snapFree && sv <= 3.0){ snapFree = false; docEl.classList.remove("free"); }
     /* position-derived travel, then accumulate its ABSOLUTE change so scrolling
        either direction reads as flying forward through space (Gary 2026-06-19) */
