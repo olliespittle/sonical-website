@@ -19,11 +19,14 @@ interface Props {
   noindex?: boolean;
   /** override the link-preview image; absolute URL */
   ogImage?: string;
+  /** centre the content column and the footer, matching the homepage */
+  centered?: boolean;
 }
 const {
   title, description, canonical, eyebrow, heading, nav,
   noindex = false,
   ogImage = 'https://www.sonical.ai/sonical-share.png',
+  centered = false,
 } = Astro.props;
 ---
 
@@ -237,9 +240,17 @@ const {
     .frow{display:flex;flex-wrap:wrap;gap:6px 26px;margin-bottom:14px;font-family:var(--font-display);font-size:13px;color:var(--muted)}
     .frow a{color:var(--text-acc);text-decoration:none}
     .frow a:hover{text-decoration:underline}
+
+    /* ===== Centred variant (centered prop) =====
+       /partners is left-aligned by design and stays that way. Pages that opt
+       in get the homepage treatment: content column centred in the page, and
+       the footer centre-aligned the way public/index.html does it. */
+    body.centered .wrap{margin-left:auto;margin-right:auto}
+    body.centered footer{text-align:center}
+    body.centered .frow{justify-content:center}
   </style>
 </head>
-<body>
+<body class={centered ? 'centered' : undefined}>
   <div class="nebula" aria-hidden="true"></div>
 
   <header>
