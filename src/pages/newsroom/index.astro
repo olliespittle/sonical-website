@@ -145,8 +145,10 @@ const PREVIEW = 3;
     .lede{color:var(--muted);font-size:clamp(16px,1.6vw,19px);max-width:60ch;margin-top:18px}
 
     .strip{margin-top:64px}
+    /* Stacked, not a space-between row: the count used to be flung to the far
+       right of the 1320px container, a long way from the heading it counts. */
     .strip-head{
-      display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+      display:flex;flex-direction:column;align-items:flex-start;gap:4px;
       padding-bottom:18px;border-bottom:1px solid rgba(192,132,252,.14);margin-bottom:30px;
     }
     .strip-head h2{font-family:var(--font-display);font-weight:600;font-size:clamp(22px,2.6vw,30px);color:var(--text-acc)}
