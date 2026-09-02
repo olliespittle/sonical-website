@@ -1,0 +1,95 @@
+---
+// /intro — the company intro video, unlisted.
+//
+// Gary shares this link directly (email, LinkedIn, decks). It is deliberately
+// not in the nav, not in sitemap.xml and carries noindex, so it is reachable
+// by link only. That is obscurity, not access control: anyone holding the URL
+// can forward it. If it ever needs real gating, that is Netlify password
+// protection (a paid plan), not this page.
+//
+// No contact line on this page on purpose: Gary sends the link from his own
+// address, so pointing people at info@sonical.ai mid-page just confuses them
+// about who to reply to. Replies should go back to whoever sent the link.
+//
+// Do NOT add /intro to public/robots.txt. A Disallow there would stop crawlers
+// reading the noindex meta, which is the tag actually keeping it out of search.
+//
+// Source: "Sonical - Intro Video.mp4", Gary's Drive, 4K HEVC 700MB. Re-encoded
+// to 1080p H.264 for the web (HEVC does not play in most browsers) and to keep
+// the committed file under GitHub's 100MB limit. Re-encode command is in
+// docs/intro-video.md.
+import Page from '../layouts/Page.astro';
+---
+
+<Page
+  title="Intro video — Sonical"
+  description="Gary Spittle, Sonical's founder and CEO, on where hearing technology is going and what we are building."
+  canonical="https://www.sonical.ai/intro/"
+  eyebrow="Intro video"
+  heading='Helping everyone <span class="acc">hear better</span>'
+  nav=""
+  noindex={true}
+  ogImage="https://www.sonical.ai/video/sonical-intro-share.jpg"
+>
+  <p class="lede">
+    Gary Spittle, Sonical's founder and CEO, on where hearing technology is
+    going and what we are building.
+  </p>
+
+  <div class="player">
+    <video
+      controls
+      playsinline
+      preload="metadata"
+      poster="/video/sonical-intro-poster.jpg"
+      width="1920"
+      height="1080"
+    >
+      <source src="/video/sonical-intro.mp4" type="video/mp4" />
+      <p class="fallback">
+        This browser cannot play the video.
+        <a href="/video/sonical-intro.mp4" download>Download it instead</a>.
+      </p>
+    </video>
+  </div>
+  <p class="runtime">5 min 42 sec</p>
+
+  <div class="ctarow">
+    <a class="btn btn-primary" href="/">Go to homepage →</a>
+  </div>
+</Page>
+
+<style>
+  /* The rounding goes on the <video> itself, NOT on a wrapper with
+     overflow:hidden. A clipping ancestor forces the browser off its hardware
+     video-overlay path and onto a masked software raster, which shows up as
+     the video going blocky while the page scrolls. */
+  .player {
+    margin-top: 34px;
+    background: #000;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+  }
+  .player video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid rgba(192, 132, 252, .16);
+    border-radius: 16px;
+  }
+  .fallback {
+    padding: 24px;
+    color: #d3c2b4;
+  }
+  .fallback a { color: #ff9e00; }
+
+  .runtime {
+    margin-top: 12px;
+    color: #9c8878;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13.5px;
+    letter-spacing: .02em;
+  }
+</style>

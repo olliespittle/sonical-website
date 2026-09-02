@@ -21,3 +21,17 @@
   to = "/"
   status = 301
   force = true
+
+# /intro is the unlisted company intro video, shared by direct link only. The
+# noindex meta on the page is the primary signal; this header covers the case
+# where a crawler sees the URL without rendering the page. Deliberately NOT a
+# robots.txt Disallow, which would stop crawlers reading the noindex at all.
+[[headers]]
+  for = "/intro"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/intro/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
