@@ -51,9 +51,10 @@
   }
   .nav-links a:hover{color:var(--ink)}
   .nav-links a.active{color:var(--text-acc);border-color:var(--graph-line);background:var(--graph-soft)}
-  @media(max-width:760px){.nav-links a{font-size:12px;padding:7px 11px}}
+  /* five nav items: the inline bar needs ~700px, so tighten then collapse below that */
+  @media(min-width:721px) and (max-width:900px){.nav-links a{font-size:12px;padding:7px 11px}}
 
-  /* hamburger — hidden on desktop, collapses the 4-item nav on phones */
+  /* hamburger — hidden on desktop, collapses the 5-item nav on phones and small tablets */
   .nav-toggle{
     display:none;background:none;border:1px solid var(--graph-line);
     border-radius:10px;width:40px;height:36px;cursor:pointer;padding:0;
@@ -63,7 +64,7 @@
   .site-nav.nav-open .nav-toggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
   .site-nav.nav-open .nav-toggle span:nth-child(2){opacity:0}
   .site-nav.nav-open .nav-toggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
-  @media(max-width:600px){
+  @media(max-width:720px){
     .nav-inner{position:relative}
     .nav-toggle{display:flex}
     .nav-links{
@@ -163,8 +164,9 @@
     <a class="logo" href="index.html" aria-label="Sonical home"><img src="sonical-lockup.svg" alt="Sonical" width="151" height="28"></a>
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>
-      <li><a href="coming-soon.html" class="active">About us</a></li>
+      <li><a href="/partners/">Partners</a></li>
       <li><a href="/newsroom/">Newsroom</a></li>
+      <li><a href="coming-soon.html" class="active">About us</a></li>
       <li><a href="index.html#contact">Talk to us</a></li>
     </ul>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span><span></span></button>

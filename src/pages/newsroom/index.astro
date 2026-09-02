@@ -105,13 +105,13 @@ const PREVIEW = 3;
     header.nav-open .nav-toggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
     header.nav-open .nav-toggle span:nth-child(2){opacity:0}
     header.nav-open .nav-toggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
-    /* tablet: keep inline but tighter */
-    @media(min-width:601px) and (max-width:820px){
+    /* five nav items: the inline bar needs ~700px, so tighten then collapse below that */
+    @media(min-width:721px) and (max-width:900px){
       .nav-inner{padding:12px 18px}
       .nav-links a{font-size:12.5px;padding:7px 11px}
     }
-    /* phone: collapse into the hamburger dropdown */
-    @media(max-width:600px){
+    /* phone + small tablet: collapse into the hamburger dropdown */
+    @media(max-width:720px){
       .nav-inner{position:relative;padding:10px 16px}
       .nav-toggle{display:flex}
       .nav-links{
@@ -220,8 +220,9 @@ const PREVIEW = 3;
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="/">Home</a></li>
-        <li><a href="/coming-soon.html">About us</a></li>
+        <li><a href="/partners/">Partners</a></li>
         <li><a href="/newsroom/" class="active" aria-current="page">Newsroom</a></li>
+        <li><a href="/coming-soon.html">About us</a></li>
         <li><a href="/#contact">Talk to us</a></li>
       </ul>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
@@ -297,6 +298,7 @@ const PREVIEW = 3;
       <img src="/sonical-lockup.svg" alt="Sonical" width="140" height="26" />
     </a>
     <div class="frow">
+      <span><a href="/partners/">Partners</a></span>
       <span>Looking for Remora? <a href="https://remora.pro">remora.pro</a></span>
       <span>Press and media: <a href="mailto:info@sonical.ai">info@sonical.ai</a></span>
       <span><a href="https://linkedin.com/company/sonical-inc">LinkedIn</a></span>

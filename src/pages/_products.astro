@@ -1,0 +1,129 @@
+---
+// DRAFT — NOT PUBLISHED. The leading underscore in the filename tells Astro to
+// skip this file, so it is not built and /products stays a 404.
+//
+// Held 2026-09-01 (Ollie): we keep Sonical and Remora separate, people who want
+// the product get sent to remora.pro, and a "Products" page listing one product
+// under-sells the platform. Revisit when a second named product maker is public.
+//
+// TO PUBLISH: rename to products.astro, set nav="products" below, re-add the
+// Products <li> to the nav in src/layouts/Page.astro, public/index.html (the NAV
+// array), public/coming-soon.html and both newsroom pages, add /products/ back
+// to public/sitemap.xml, and drop the /products redirect from netlify.toml.
+//
+// /products — "products running on CosmOS".
+//
+// Scope decision (Ollie, 2026-09-01): sonical.ai stays the platform site.
+// Remora gets ONE short section and a link out to remora.pro. No device specs,
+// no pricing, no ship dates on this page — those live on remora.pro and would
+// only go stale here. Every claim below is already published on the homepage
+// or on remora.pro; nothing new is asserted.
+//
+// This page exists because /products was a 404 while the old site's
+// "Products — Coming Soon" sitelink was still in Google's index.
+import Page from '../layouts/Page.astro';
+---
+
+<Page
+  title="Products running on CosmOS — Sonical"
+  description="CosmOS is Sonical's operating system for the ears. It runs on headphones, headsets, earbuds and smart eyewear, and turns them into devices that can take on new abilities after they ship."
+  canonical="https://www.sonical.ai/products/"
+  eyebrow="Products"
+  heading='Products running <span class="acc">on CosmOS</span>'
+  nav=""
+>
+  <p class="lede">
+    Sonical is a software company. We build CosmOS, the operating system for the
+    ears, and license it to the companies that make audio devices. This page
+    covers what CosmOS runs on, what it adds, and which products ship with it today.
+  </p>
+
+  <section class="block">
+    <h2>What a CosmOS product is</h2>
+    <p>
+      Most audio devices ship frozen in time. The hardware could do more, but the
+      software is locked, so the device does the same thing on its last day as on
+      its first.
+    </p>
+    <p>
+      CosmOS runs on the device itself, across audio, sensors and every data stream
+      the hardware carries. It handles real-time scheduling, lets several apps
+      process the same stream, and holds latency low enough for professional
+      monitoring. A device running CosmOS can take on new abilities years after it
+      was bought. We call these <b>personal hearing computers</b>, and the shift
+      they represent <b>Headphone&nbsp;3.0</b>.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>What it runs on</h2>
+    <div class="rows">
+      <div class="rowcard">
+        <h3>Headphones</h3>
+        <p>Studio, gaming and everyday listening.</p>
+      </div>
+      <div class="rowcard">
+        <h3>Headsets</h3>
+        <p>Calls and communication.</p>
+      </div>
+      <div class="rowcard">
+        <h3>Earbuds</h3>
+        <p>True wireless, all day.</p>
+      </div>
+      <div class="rowcard">
+        <h3>Smart eyewear</h3>
+        <p>Audio built into glasses.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What it adds</h2>
+    <p>
+      Developers publish audio apps to the cloud. They download through the phone
+      the listener already owns, onto the CosmOS device in their ears. Apps
+      running on CosmOS today:
+    </p>
+    <ul class="ticks">
+      <li>Hearing protection and hearing correction</li>
+      <li>Personal audio and noise reduction</li>
+      <li>Spatial audio and EQ</li>
+      <li>Compressor and crossfeed</li>
+      <li>Clarity boost</li>
+    </ul>
+    <p>
+      More are on the way. The owner chooses which apps their device runs, so it
+      fixes what matters to them rather than only what every product ships with.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Shipping with CosmOS today</h2>
+    <p>
+      <b>Remora</b> is the personal hearing computer. It is built by Remora, a
+      separate product company, and it runs CosmOS. Remora sells two devices:
+      <b>Remora&nbsp;ONE</b>, which is wired, and <b>Remora&nbsp;PRO</b>, which is
+      wireless over Ultra-Wideband. Specifications, availability and ordering are
+      all on Remora's own site.
+    </p>
+    <div class="ctarow">
+      <a class="btn btn-ghost" href="https://remora.pro" rel="noopener">See Remora at remora.pro →</a>
+    </div>
+    <!-- TODO: add a second named product maker here once one is public. Until
+         then this section reads as a single-product list, which under-sells the
+         platform. Revisit per the open question in the project context doc
+         ("Products on CosmOS" section, §9 #8). -->
+  </section>
+
+  <section class="block">
+    <h2>Building a product on CosmOS</h2>
+    <p>
+      Device makers, technology suppliers and app developers all come in through
+      the same door: the CosmOS Certified Technology Program.
+    </p>
+    <div class="ctarow">
+      <a class="btn btn-primary" href="/partners/">The partner program →</a>
+      <a class="btn btn-ghost" href="/?reason=products#contact">Talk to us →</a>
+    </div>
+  </section>
+</Page>

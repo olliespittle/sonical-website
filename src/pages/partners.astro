@@ -1,0 +1,112 @@
+---
+// /partners — the CosmOS Certified Technology Program landing page.
+//
+// Built because the program was named on the homepage but linked from nowhere:
+// a developer looking for "the plugin / partner program" had no route to it and
+// /partners was a 404 (Philipp Dransfeld, 16 Jun 2026).
+//
+// Spelling: "Program", not "programme" — matches the registered name
+// "CosmOS Certified Technology Program" and the site's US spelling.
+//
+// Every partner name below is cleared for public use (project context doc, §5,
+// Ollie 2026-06-10) and already appears on the homepage logo wall.
+import Page from '../layouts/Page.astro';
+---
+
+<Page
+  title="Partner program — Sonical"
+  description="The CosmOS Certified Technology Program: SDK access, certification and support for developers building audio apps and for the companies building the hardware that runs them."
+  canonical="https://www.sonical.ai/partners/"
+  eyebrow="Partner program"
+  heading='The CosmOS Certified <span class="acc">Technology Program</span>'
+  nav="partners"
+>
+  <p class="lede">
+    One program, three ways in. Build audio apps that run on CosmOS, build the
+    devices that run it, or supply the silicon and sensors underneath. Partners
+    get SDK access, certification and support.
+  </p>
+
+  <section class="block">
+    <h2>Who it is for</h2>
+    <div class="rows">
+      <div class="rowcard">
+        <h3>App developers</h3>
+        <p>
+          Build an audio app once and run it on any CosmOS device, instead of
+          porting it to each manufacturer's closed firmware.
+        </p>
+      </div>
+      <div class="rowcard">
+        <h3>Product makers</h3>
+        <p>
+          Ship devices that can get better after they leave the factory, using
+          Sonical's software and reference designs.
+        </p>
+      </div>
+      <div class="rowcard">
+        <h3>Technology suppliers</h3>
+        <p>
+          Put chips, sensors and radios in front of every builder on the
+          platform rather than one customer at a time.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What partners get</h2>
+    <ul class="ticks">
+      <li><b>SDK access.</b> The CosmOS software development kit, with the tools to build and test on-device.</li>
+      <li><b>Certification.</b> Verification that what you have built runs correctly on CosmOS devices.</li>
+      <li><b>Support.</b> Direct access to the engineering team while you build.</li>
+    </ul>
+    <!-- TODO: certification criteria, review timeline, and whether there is a
+         program fee are not published anywhere. Get these from Larry Golob
+         (VP Partnerships & BD, runs the program) before this page claims
+         anything more specific. -->
+  </section>
+
+  <section class="block">
+    <h2>How to join</h2>
+    <ol class="steps">
+      <li><b>Tell us what you want to build.</b> Use the form and say which of the three routes fits you. A real person reads every message.</li>
+      <li><b>We talk it through.</b> We work out where you fit on the platform and what you would need from us.</li>
+      <li><b>You get the SDK and start building.</b> Access is invitation-only for now, so this step follows the conversation rather than a signup.</li>
+    </ol>
+    <div class="ctarow">
+      <a class="btn btn-primary" href="/?reason=apps#contact">I build audio apps →</a>
+      <a class="btn btn-ghost" href="/?reason=products#contact">I make audio products →</a>
+      <a class="btn btn-ghost" href="/?reason=tech#contact">I supply technology →</a>
+    </div>
+    <p class="note">
+      Each button opens the contact form on the homepage with your reason already
+      ticked. Prefer email? Write to <a href="mailto:info@sonical.ai">info@sonical.ai</a>.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Already on the platform</h2>
+    <div class="logo-wall">
+      <img src="/logos/fraunhofer.png" alt="Fraunhofer" />
+      <img src="/logos/hear360.png" alt="Hear360" />
+      <img src="/logos/oikla.png" alt="Oikla" />
+      <span class="logo-lockup" role="img" aria-label="Golden Hearing"><img src="/logos/golden-hearing.png" alt="" /><span class="nm"><span>Golden</span><span>Hearing</span></span></span>
+      <img src="/logos/hear-angel.png" alt="Hear Angel" />
+      <img src="/logos/idun-audio.png" alt="IDUN Audio" />
+      <img src="/logos/sigma-connectivity.png" alt="Sigma Connectivity" />
+      <img src="/logos/antennaware.png" alt="AntennaWare" />
+      <img src="/logos/xmos.png" alt="XMOS" />
+      <img src="/logos/renesas.png" alt="Renesas" />
+      <img src="/logos/st.png" alt="STMicroelectronics" />
+      <img src="/logos/bosch.png" alt="Bosch" />
+      <img src="/logos/qorvo.png" alt="Qorvo" />
+    </div>
+    <p>
+      Coverage of what partners are building with us is in the
+      <a href="/newsroom/" style="color:var(--text-acc);text-decoration:none">newsroom</a>.
+      Remora, the world's first personal hearing computer, has CosmOS inside:
+      <a href="https://remora.pro" rel="noopener" style="color:var(--text-acc);text-decoration:none">remora.pro</a>.
+    </p>
+  </section>
+</Page>

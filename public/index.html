@@ -514,9 +514,10 @@
   }
   .nav-links a:hover{color:var(--ink)}
   .nav-links a.active{color:var(--text-acc);border-color:var(--graph-line);background:var(--graph-soft)}
-  @media(max-width:760px){.nav-links a{font-size:12px;padding:7px 11px}}
+  /* five nav items: the inline bar needs ~700px, so tighten then collapse below that */
+  @media(min-width:721px) and (max-width:900px){.nav-links a{font-size:12px;padding:7px 11px}}
 
-  /* hamburger — hidden on desktop, collapses the 4-item nav on phones */
+  /* hamburger — hidden on desktop, collapses the 5-item nav on phones and small tablets */
   .nav-toggle{
     display:none;background:none;border:1px solid var(--graph-line);
     border-radius:10px;width:40px;height:36px;cursor:pointer;padding:0;
@@ -526,7 +527,7 @@
   .site-nav.nav-open .nav-toggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
   .site-nav.nav-open .nav-toggle span:nth-child(2){opacity:0}
   .site-nav.nav-open .nav-toggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
-  @media(max-width:600px){
+  @media(max-width:720px){
     .nav-inner{position:relative}
     .nav-toggle{display:flex}
     .nav-links{
@@ -988,7 +989,7 @@
         <blockquote class="pull">&ldquo;Our goal is to make Sonical the Raspberry Pi for your hearing.&rdquo;<cite>Gary Spittle · Founder &amp; CEO</cite></blockquote>
       </div>
       <div class="fr callout">
-        <p><b>Remora</b> is the first product company building on CosmOS. Its devices are the world&rsquo;s first personal hearing computers - Headphone 3.0, built with Sonical&rsquo;s software and reference designs. One use case for the platform; the first of many. <a href="https://remora.pro">remora.pro →</a></p>
+        <p><b>Sonical builds CosmOS.</b> Remora is the world&rsquo;s first personal hearing computer, with CosmOS inside. One use case for the platform; the first of many. <a href="https://remora.pro">remora.pro →</a></p>
       </div>
     </section>
 
@@ -1016,6 +1017,7 @@
           </div>
         </div>
         <p class="prog">Partners join through the <b>CosmOS Certified Technology Program</b>: SDK access, certification and support.</p>
+        <div class="ctarow"><a class="btn btn-ghost" href="/partners/">How the partner program works →</a></div>
       </div>
     </section>
 
@@ -1026,6 +1028,7 @@
         <h2>Want to build <span class="acc">on CosmOS?</span></h2>
         <p class="lede">The SDK is invitation-only for now. Tell us what you want to build and we&rsquo;ll go from there.</p>
         <div class="ctarow">
+          <a class="btn btn-primary" href="/partners/">The partner program →</a>
           <button class="btn btn-ghost cta-contact" type="button">Talk to us →</button>
         </div>
       </div>
@@ -1121,6 +1124,8 @@
   <footer>
     <a class="footer-logo" href="#" aria-label="Sonical home"><img src="sonical-lockup.svg" alt="Sonical" width="161" height="30"></a>
     <div class="frow">
+      <span><a href="/partners/">Partners</a></span>
+      <span><a href="/newsroom/">Newsroom</a></span>
       <span>Looking for Remora? <a href="https://remora.pro">remora.pro</a></span>
       <span>Press and media: <a href="mailto:info@sonical.ai">info@sonical.ai</a></span>
       <span><a href="https://linkedin.com/company/sonical-inc">LinkedIn</a></span>
@@ -1154,8 +1159,9 @@
   /* Each nav item maps to a target (or is an external page); activeWhen decides the highlight */
   var NAV = [
     { label:"Home",       target:0,          activeWhen:function(idx){ return idx < contactIdx; } },
-    { label:"About us",   href:"coming-soon.html", activeWhen:function(){ return false; } },  // under-construction page until Gary's done with the Notion doc
+    { label:"Partners",   href:"/partners/", activeWhen:function(){ return false; } },
     { label:"Newsroom",   href:"/newsroom/", activeWhen:function(){ return false; } },
+    { label:"About us",   href:"coming-soon.html", activeWhen:function(){ return false; } },  // under-construction page until Gary's done with the Notion doc
     { label:"Talk to us", target:contactIdx, activeWhen:function(idx){ return idx === contactIdx; } }
   ];
   var navBtns = NAV.map(function(item){
@@ -1430,6 +1436,25 @@
     for (var i = 0; i < targets.length; i++){
       if (targets[i].id === id){ (function(idx){ setTimeout(function(){ jumpTo(idx); }, 120); })(i); break; }
     }
+  })();
+
+  /* ?reason=<key> pre-ticks a contact-form checkbox, so /partners (and any future
+     landing page) can hand someone to the form with their route already selected
+     (e.g. /?reason=apps#contact). Unknown keys are ignored. */
+  (function(){
+    var REASON = {
+      apps:     "I build audio apps",
+      products: "I make audio products",
+      tech:     "I supply technology or components",
+      press:    "Press and media"
+    };
+    var key = (location.search.match(/[?&]reason=([^&]*)/) || [])[1];
+    if (!key) return;
+    var want = REASON[decodeURIComponent(key).toLowerCase()];
+    if (!want) return;
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="reason"]'), function(cb){
+      if (cb.value === want) cb.checked = true;
+    });
   })();
 
   /* in-page "Talk to us" CTAs (intro card + developers section) jump to the contact form */

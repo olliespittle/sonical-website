@@ -1,25 +1,22 @@
 ---
-import { getCollection, render } from 'astro:content';
-
-// One page per "From Sonical" post. Empty collection -> zero pages (build still passes).
-export async function getStaticPaths() {
-  const posts = await getCollection('posts');
-  return posts.map((post) => ({
-    params: { slug: post.id },
-    props: { post },
-  }));
+// Shared shell for the standard content pages (/products, /partners).
+// Carries the homepage's Ember palette, the fixed header + hamburger, the
+// nebula backdrop and the footer, so a new page is just its <main> content.
+//
+// NOTE: the nav list is still duplicated in public/index.html (built in JS),
+// public/coming-soon.html and the two newsroom pages. Adding a nav item means
+// touching all five. Worth folding those into this layout next time one of
+// them is opened for other reasons.
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  eyebrow: string;
+  heading: string;
+  /** which nav item to mark current */
+  nav: 'partners' | '';
 }
-
-const { post } = Astro.props;
-const { Content } = await render(post);
-
-const fmtDate = (d: Date) =>
-  d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
-
-const description = post.data.excerpt ?? `${post.data.title} — from Sonical.`;
-const ogImage = post.data.image
-  ? new URL(post.data.image, Astro.site).href
-  : 'https://www.sonical.ai/sonical-share.png';
+const { title, description, canonical, eyebrow, heading, nav } = Astro.props;
 ---
 
 <!doctype html>
@@ -27,16 +24,17 @@ const ogImage = post.data.image
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{post.data.title} — Sonical</title>
+  <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="canonical" href={`https://www.sonical.ai/newsroom/${post.id}/`} />
+  <link rel="canonical" href={canonical} />
 
-  <meta property="og:type" content="article" />
-  <meta property="og:url" content={`https://www.sonical.ai/newsroom/${post.id}/`} />
-  <meta property="og:title" content={post.data.title} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Sonical" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content={ogImage} />
+  <meta property="og:image" content="https://www.sonical.ai/sonical-share.png" />
   <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -53,17 +51,21 @@ const ogImage = post.data.image
       --graph-acc:#c084fc;
       --graph-line:rgba(192,132,252,.3);
       --graph-soft:rgba(192,132,252,.1);
+      --glass:rgba(31,18,12,.79);
+      --card:rgba(31,18,12,.62);
+      --btn-grad:linear-gradient(90deg,#a855f7 0%,#a855f7 25%,#ff8a00 75%,#ff8a00 100%);
       --font-display:'Space Grotesk',system-ui,sans-serif;
       --font-body:'Inter',system-ui,sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
       background:var(--bg-0);color:var(--ink);
-      font-family:var(--font-body);font-size:16px;line-height:1.65;
+      font-family:var(--font-body);font-size:16px;line-height:1.6;
       -webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;
     }
     ::selection{background:rgba(192,132,252,.35)}
     a{color:inherit}
+
     .nebula{
       position:fixed;inset:0;z-index:0;pointer-events:none;
       background:
@@ -72,16 +74,17 @@ const ogImage = post.data.image
         radial-gradient(72% 60% at 50% 112%, rgba(107,33,168,.5), transparent 65%);
     }
 
-    /* Header (shared with the newsroom index) */
+    /* ===== Header (matches the newsroom) ===== */
     header{
       position:fixed;top:0;left:0;right:0;z-index:50;
-      background:rgba(12,7,8,.86);border-bottom:1px solid rgba(192,132,252,.12);
+      backdrop-filter:none;background:rgba(12,7,8,.86);
+      border-bottom:1px solid rgba(192,132,252,.12);
     }
     .nav-inner{
       max-width:1320px;margin:0 auto;padding:12px 26px;
       display:flex;align-items:center;justify-content:space-between;gap:18px;
     }
-    .logo{display:inline-flex}
+    .logo{display:inline-flex;color:var(--ink);text-decoration:none}
     .logo img{height:30px;width:auto;display:block}
     .nav-links{display:flex;align-items:center;gap:6px;list-style:none}
     .nav-links a{
@@ -92,6 +95,7 @@ const ogImage = post.data.image
     }
     .nav-links a:hover{color:var(--ink)}
     .nav-links a.active{color:var(--text-acc);border-color:var(--graph-line);background:var(--graph-soft)}
+
     .nav-toggle{
       display:none;background:none;border:1px solid var(--graph-line);
       border-radius:10px;width:42px;height:38px;cursor:pointer;padding:0;
@@ -103,7 +107,6 @@ const ogImage = post.data.image
     header.nav-open .nav-toggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
     /* five nav items: the inline bar needs ~700px, so tighten then collapse below that */
     @media(min-width:721px) and (max-width:900px){
-      .nav-inner{padding:12px 18px}
       .nav-links a{font-size:12.5px;padding:7px 11px}
     }
     @media(max-width:720px){
@@ -119,51 +122,105 @@ const ogImage = post.data.image
       .nav-links a{font-size:14px;padding:11px 14px}
     }
 
-    /* Article */
-    main{position:relative;z-index:1}
-    .article{max-width:760px;margin:0 auto;padding:130px 26px 0}
-    @media(max-width:760px){.article{padding-top:104px}}
-    .back{
-      display:block;width:max-content;font-family:var(--font-display);font-size:13px;font-weight:500;
-      color:var(--faint);text-decoration:none;margin-bottom:26px;transition:color .2s;
-    }
-    .back:hover{color:var(--text-acc)}
+    /* ===== Layout ===== */
+    main{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 26px}
+    .wrap{padding-top:130px;max-width:960px}
+    @media(max-width:760px){.wrap{padding-top:104px}}
+
     .eyebrow{
       display:inline-block;font-family:var(--font-display);font-size:12px;font-weight:600;
       letter-spacing:.18em;text-transform:uppercase;color:var(--graph-acc);
       padding-left:36px;position:relative;margin-bottom:16px;
     }
-    .eyebrow::before{content:"";position:absolute;left:0;top:50%;width:28px;height:1px;background:var(--graph-acc)}
-    .article h1{
-      font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.1;
-      font-size:clamp(30px,4.4vw,48px);
+    .eyebrow::before{
+      content:"";position:absolute;left:0;top:50%;width:28px;height:1px;background:var(--graph-acc);
     }
-    .article .date{font-family:var(--font-display);font-size:13.5px;color:var(--faint);margin-top:14px;letter-spacing:.03em}
-    .hero{margin-top:30px;border-radius:16px;overflow:hidden;border:1px solid rgba(192,132,252,.16)}
-    .hero img{width:100%;height:auto;display:block}
+    h1{
+      font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.06;
+      font-size:clamp(34px,5vw,56px);
+    }
+    h1 .acc{color:var(--text-acc)}
+    .lede{color:var(--muted);font-size:clamp(16px,1.6vw,19px);max-width:62ch;margin-top:18px}
 
-    /* Prose (rendered markdown body) */
-    .prose{margin-top:34px;color:var(--muted);font-size:17px;line-height:1.75}
-    .prose > * + *{margin-top:1.15em}
-    .prose h2{font-family:var(--font-display);color:var(--ink);font-weight:600;font-size:clamp(21px,2.6vw,27px);margin-top:1.7em;line-height:1.25}
-    .prose h3{font-family:var(--font-display);color:var(--ink);font-weight:600;font-size:19px;margin-top:1.5em}
-    .prose a{color:var(--text-acc);text-decoration:underline;text-underline-offset:2px}
-    .prose strong{color:var(--ink)}
-    .prose ul,.prose ol{padding-left:1.3em}
-    .prose li + li{margin-top:.4em}
-    .prose img{max-width:100%;height:auto;border-radius:12px}
-    .prose blockquote{
-      border-left:2px solid var(--graph-acc);padding-left:18px;color:var(--ink);
-      font-style:italic;
+    section.block{margin-top:64px}
+    section.block > h2{
+      font-family:var(--font-display);font-weight:600;font-size:clamp(22px,2.6vw,30px);
+      color:var(--text-acc);padding-bottom:18px;
+      border-bottom:1px solid rgba(192,132,252,.14);margin-bottom:26px;
     }
-    .prose code{
-      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;
-      background:rgba(192,132,252,.12);padding:2px 6px;border-radius:6px;
-    }
-    .prose hr{border:none;border-top:1px solid rgba(192,132,252,.16)}
+    section.block p{color:var(--muted);max-width:68ch;margin-bottom:14px}
+    section.block p:last-child{margin-bottom:0}
+    section.block p b,section.block p strong{color:var(--ink);font-weight:600}
 
+    /* card rows (device classes, audience routes, product callouts) */
+    .rows{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .rowcard{
+      background:var(--card);border:1px solid rgba(192,132,252,.16);
+      border-radius:16px;padding:20px 20px 22px;
+    }
+    .rowcard h3{
+      font-family:var(--font-display);font-weight:600;font-size:17px;
+      color:var(--ink);margin-bottom:8px;
+    }
+    .rowcard p{color:var(--muted);font-size:14.5px;margin:0}
+
+    /* numbered steps */
+    ol.steps{list-style:none;counter-reset:s;display:grid;gap:16px;margin-top:4px}
+    ol.steps li{
+      counter-increment:s;position:relative;padding-left:46px;
+      color:var(--muted);max-width:66ch;
+    }
+    ol.steps li::before{
+      content:counter(s);position:absolute;left:0;top:1px;
+      width:30px;height:30px;border-radius:999px;
+      border:1px solid var(--graph-line);background:var(--graph-soft);
+      color:var(--graph-acc);font-family:var(--font-display);font-size:13px;font-weight:600;
+      display:flex;align-items:center;justify-content:center;
+    }
+    ol.steps li b{color:var(--ink);font-weight:600}
+
+    /* plain feature list */
+    ul.ticks{list-style:none;display:grid;gap:10px;margin:0 0 14px}
+    ul.ticks li{position:relative;padding-left:22px;color:var(--muted)}
+    ul.ticks li::before{content:"";position:absolute;left:2px;top:11px;width:8px;height:8px;border-radius:2px;background:var(--graph-acc)}
+    ul.ticks li b{color:var(--ink);font-weight:600}
+
+    /* logo wall — same treatment as the homepage partners section */
+    .logo-wall{
+      display:flex;flex-wrap:wrap;align-items:center;gap:24px 38px;
+      margin:4px 0 22px;
+    }
+    .logo-wall img{height:30px;width:auto;opacity:.85;filter:saturate(0) brightness(1.6)}
+    .logo-wall .logo-lockup{display:inline-flex;align-items:center;gap:9px}
+    .logo-wall .logo-lockup img{height:30px}
+    .logo-wall .logo-lockup .nm{
+      display:flex;flex-direction:column;line-height:1.05;
+      font-family:var(--font-display);font-size:12.5px;font-weight:600;color:var(--muted);
+    }
+
+    /* CTAs */
+    .ctarow{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .btn{
+      display:inline-block;cursor:pointer;text-decoration:none;
+      font-family:var(--font-display);font-size:14.5px;font-weight:600;letter-spacing:.01em;
+      border-radius:999px;padding:13px 26px;border:1px solid transparent;transition:.2s;
+    }
+    .btn-primary{background:var(--btn-grad);color:#150c06;border:none}
+    .btn-primary:hover{filter:brightness(1.08)}
+    .btn-ghost{color:var(--ink);border-color:var(--graph-line);background:none}
+    .btn-ghost:hover{border-color:var(--graph-acc);color:var(--text-acc);background:var(--graph-soft)}
+
+    .note{
+      margin-top:26px;padding:16px 18px;border-radius:14px;
+      border:1px solid rgba(192,132,252,.16);background:rgba(31,18,12,.45);
+      color:var(--faint);font-size:14px;
+    }
+    .note a{color:var(--text-acc);text-decoration:none}
+    .note a:hover{text-decoration:underline}
+
+    /* ===== Footer (matches the newsroom) ===== */
     footer{
-      position:relative;z-index:1;max-width:760px;margin:80px auto 0;padding:40px 26px 56px;
+      position:relative;z-index:1;max-width:1320px;margin:96px auto 0;padding:40px 26px 56px;
       border-top:1px solid rgba(192,132,252,.12);color:var(--faint);font-size:13px;
     }
     .footer-logo{display:inline-block;margin-bottom:18px}
@@ -183,8 +240,8 @@ const ogImage = post.data.image
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="/">Home</a></li>
-        <li><a href="/partners/">Partners</a></li>
-        <li><a href="/newsroom/" class="active" aria-current="page">Newsroom</a></li>
+        <li><a href="/partners/" class={nav === 'partners' ? 'active' : undefined} aria-current={nav === 'partners' ? 'page' : undefined}>Partners</a></li>
+        <li><a href="/newsroom/">Newsroom</a></li>
         <li><a href="/coming-soon.html">About us</a></li>
         <li><a href="/#contact">Talk to us</a></li>
       </ul>
@@ -195,18 +252,11 @@ const ogImage = post.data.image
   </header>
 
   <main>
-    <article class="article">
-      <a class="back" href="/newsroom/">← Newsroom</a>
-      <span class="eyebrow">From Sonical</span>
-      <h1>{post.data.title}</h1>
-      <p class="date">{fmtDate(post.data.date)}</p>
-      {post.data.image && (
-        <div class="hero"><img src={post.data.image} alt={post.data.title} /></div>
-      )}
-      <div class="prose">
-        <Content />
-      </div>
-    </article>
+    <div class="wrap">
+      <span class="eyebrow">{eyebrow}</span>
+      <h1 set:html={heading}></h1>
+      <slot />
+    </div>
   </main>
 
   <footer>
@@ -215,6 +265,7 @@ const ogImage = post.data.image
     </a>
     <div class="frow">
       <span><a href="/partners/">Partners</a></span>
+      <span><a href="/newsroom/">Newsroom</a></span>
       <span>Looking for Remora? <a href="https://remora.pro">remora.pro</a></span>
       <span>Press and media: <a href="mailto:info@sonical.ai">info@sonical.ai</a></span>
       <span><a href="https://linkedin.com/company/sonical-inc">LinkedIn</a></span>

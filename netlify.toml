@@ -4,3 +4,20 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# The old CosmOS site had a "Products — Coming Soon" page that Google still has
+# a sitelink for. /products has been a 404 since the redesign, which is how a
+# partner prospect bounced in June 2026. Send it to the homepage, whose Momentum
+# section carries the short Remora line and the remora.pro link.
+# Remove this if /products is ever published as a real page.
+[[redirects]]
+  from = "/products"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/products/*"
+  to = "/"
+  status = 301
+  force = true
