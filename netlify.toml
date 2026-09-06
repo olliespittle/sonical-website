@@ -22,6 +22,53 @@
   status = 301
   force = true
 
+# Legacy URLs from the old CosmOS site. Search Console was still reporting all
+# three as 404s in September 2026, so the crawl budget and any remaining link
+# equity were going nowhere. Each one points at whatever replaced it.
+#
+#   /partnergallery  was the partner logo wall      -> /partners/
+#   /blog            was the news index             -> /newsroom/
+#   /headphone3p0    was the Headphone 3.0 explainer -> homepage (the Solution
+#                    card carries the 1.0 -> 2.0 -> 3.0 arc)
+#
+# Both the bare path and the wildcard are listed because Google has crawled
+# sub-paths of two of them (/partnergallery/1, /blog/all/1).
+[[redirects]]
+  from = "/partnergallery"
+  to = "/partners/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/partnergallery/*"
+  to = "/partners/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog"
+  to = "/newsroom/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/newsroom/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/headphone3p0"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/headphone3p0/*"
+  to = "/"
+  status = 301
+  force = true
+
 # /intro is the unlisted company intro video, shared by direct link only. The
 # noindex meta on the page is the primary signal; this header covers the case
 # where a crawler sees the URL without rendering the page. Deliberately NOT a
