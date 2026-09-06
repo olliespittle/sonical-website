@@ -1,0 +1,153 @@
+---
+// /privacy-policy — the site's only legal page.
+//
+// Built 2026-09-06 (Ollie). The homepage contact form has posted personal data
+// to HubSpot since the June 2026 launch with no privacy policy anywhere on the
+// site, and the old CosmOS site's /privacy-policy had been 404ing since the
+// redesign (Search Console: "Crawled - currently not indexed", last crawled
+// 23 Mar 2026). Reusing the old path rather than /privacy so the URL Google
+// already knows resolves again.
+//
+// Brief was "as minimal as legally and physically possible". That is workable
+// here only because the site genuinely collects almost nothing: no cookies, no
+// analytics, no tag manager, no advertising or tracking pixels, and no HubSpot
+// tracking script (the form posts straight to the Forms API instead). No cookie
+// banner is needed while that stays true.
+//
+// EVERY CLAIM BELOW WAS VERIFIED AGAINST THE SOURCE ON 2026-09-06. If any of
+// these change, this page has to change with them:
+//   - public/index.html form -> api-eu1.hsforms.com (portal 143819223, EU1)
+//   - the same form -> api.ipify.org for the visitor IP, on submit only
+//   - Netlify hosting, so Netlify holds the server logs
+//
+// Fonts were the fourth entry here until 2026-09-06. They are now self-hosted
+// from public/fonts/, so simply loading a page contacts nobody but Netlify.
+// Putting a Google Fonts <link> back into any page means putting Google back
+// into the list below.
+// Adding any analytics or tracking to this site means rewriting section 2 and
+// almost certainly adding a consent banner.
+import Page from '../layouts/Page.astro';
+
+const updated = '6 September 2026';
+---
+
+<Page
+  title="Privacy policy — Sonical"
+  description="What Sonical.ai collects, which is almost nothing. No cookies, no analytics, no tracking. The only personal data we hold is what you type into the contact form."
+  canonical="https://www.sonical.ai/privacy-policy/"
+  eyebrow="Privacy"
+  heading='Privacy <span class="acc">policy</span>'
+  nav=""
+  centered={true}
+>
+  <p class="lede">
+    This site sets no cookies, runs no analytics and does not track you. The only
+    personal data we hold is what you type into the contact form. Everything
+    below is the detail behind those two sentences.
+  </p>
+
+  <section class="block">
+    <h2>Who we are</h2>
+    <p>
+      Sonical Inc, San Mateo, California. We are the data controller for this
+      site. For anything on this page, write to
+      <a href="mailto:info@sonical.ai">info@sonical.ai</a>.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>What we collect</h2>
+    <p><b>If you submit the contact form,</b> we receive:</p>
+    <ul class="ticks">
+      <li>Your name and email address</li>
+      <li>The reasons for interest you tick</li>
+      <li>Your IP address and the page you submitted from</li>
+    </ul>
+    <p>
+      <b>When any page loads,</b> our host records a standard web server log entry:
+      the request, your IP address and your browser's user agent.
+    </p>
+    <p>
+      <b>That is everything.</b> No cookies, no analytics, no advertising or
+      tracking pixels, no profiling, and nothing stored on your device. The
+      fonts and images are served from our own domain rather than someone
+      else's, so reading a page introduces you to nobody. Browse as much as you
+      like and we learn nothing about you beyond a line in a server log.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Why we hold it</h2>
+    <p>
+      To reply to you, and to carry on the conversation if there is one worth
+      having. We do not sell it, rent it or pass it to anyone for their own
+      marketing. Under UK and EU data protection law our lawful basis is
+      legitimate interest, specifically responding to an enquiry you chose to
+      send us. Server logs exist to keep the site running and secure.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Who else touches it</h2>
+    <div class="rows">
+      <div class="rowcard">
+        <h3>HubSpot</h3>
+        <p>
+          Our CRM. Contact form submissions are stored here, in HubSpot's EU data
+          centre.
+        </p>
+      </div>
+      <div class="rowcard">
+        <h3>Netlify</h3>
+        <p>Hosts the site and holds the server logs, on their retention schedule.</p>
+      </div>
+      <div class="rowcard">
+        <h3>ipify</h3>
+        <p>
+          When you submit the form, your browser asks ipify for your public IP so
+          the enquiry is not blind to where it came from. On submit only.
+        </p>
+      </div>
+    </div>
+    <p class="note">
+      Sonical is US-based, so an enquiry you send us is handled in the United
+      States. Each of the services above is used for the single job described and
+      none of them get your details for their own marketing.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>How long we keep it</h2>
+    <p>
+      Enquiries stay in HubSpot until you ask us to delete them, or until they
+      are plainly stale and we clear them out. Server logs are held by Netlify on
+      their own schedule and we do not copy them anywhere.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Your rights</h2>
+    <p>
+      Email <a href="mailto:info@sonical.ai">info@sonical.ai</a> and we will act
+      on it. You can ask us to show you what we hold, correct it, delete it, send
+      you a copy, or stop contacting you. No form, no account, no hoops.
+    </p>
+    <p>
+      If you are in the UK or the EU you also have the right to complain to your
+      national data protection authority. If you are in California, you have the
+      right to know what we hold and to have it deleted. We do not sell personal
+      information, and we never have.
+    </p>
+  </section>
+
+  <section class="block">
+    <h2>Changes</h2>
+    <p>
+      If we start collecting anything beyond what is described here, this page
+      changes first. Last updated {updated}.
+    </p>
+    <div class="ctarow">
+      <a class="btn btn-ghost" href="/">Back to the homepage &rarr;</a>
+    </div>
+  </section>
+</Page>
