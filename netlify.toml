@@ -30,9 +30,21 @@
 #   /blog            was the news index             -> /newsroom/
 #   /headphone3p0    was the Headphone 3.0 explainer -> homepage (the Solution
 #                    card carries the 1.0 -> 2.0 -> 3.0 arc)
+#   /contactus       was the contact page           -> /#contact
 #
 # Both the bare path and the wildcard are listed because Google has crawled
 # sub-paths of two of them (/partnergallery/1, /blog/all/1).
+#
+# /contactus was added 2026-09-06. It was not in the Search Console report,
+# but Google's link graph still knows it (it showed up as a referring page
+# while inspecting /privacy-policy), and the contact form is the site's main
+# conversion point, so an old bookmark landing on a 404 is the worst case
+# here. The #contact fragment is picked up by the homepage's load-time
+# deep-link handler, which scrolls to the form.
+#
+# Still 404, deliberately left alone (Ollie, 2026-09-06): /aboutus, /news,
+# /technology, /cosmos, /developers. None are in the report and none have a
+# clean destination. Revisit only if one starts showing up.
 [[redirects]]
   from = "/partnergallery"
   to = "/partners/"
@@ -66,6 +78,18 @@
 [[redirects]]
   from = "/headphone3p0/*"
   to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/contactus"
+  to = "/#contact"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/contactus/*"
+  to = "/#contact"
   status = 301
   force = true
 
