@@ -106,3 +106,15 @@
   for = "/intro/*"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
+
+# /plugin-demo is the unlisted Remora plugin-download demo video, same
+# unlisted-by-link treatment as /intro above.
+[[headers]]
+  for = "/plugin-demo"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/plugin-demo/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

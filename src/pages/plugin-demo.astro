@@ -1,0 +1,96 @@
+---
+// /plugin-demo — the Remora plugin-download demo video, unlisted.
+//
+// Same setup as /intro: shared by direct link only. Not in the nav, not in
+// sitemap.xml, carries noindex, so it is reachable by link only. That is
+// obscurity, not access control: anyone holding the URL can forward it. If it
+// ever needs real gating, that is Netlify password protection (a paid plan),
+// not this page.
+//
+// No contact line on this page on purpose, matching /intro: whoever sends the
+// link should get the reply, not info@sonical.ai.
+//
+// Do NOT add /plugin-demo to public/robots.txt. A Disallow there would stop
+// crawlers reading the noindex meta, which is the tag actually keeping it out
+// of search.
+//
+// Source: "Remora Plugin Demo.mp4", 4K HEVC 3:47, 557MB. Re-encoded to 1080p
+// H.264 for the web (HEVC does not play in most browsers) and to keep the
+// committed file under GitHub's 100MB limit. Re-encode command is in
+// docs/intro-video.md (same recipe, different source/output names).
+import Page from '../layouts/Page.astro';
+---
+
+<Page
+  title="Plugin demo — Sonical"
+  description="A demo of downloading and running third-party audio plugins on a Remora in real time."
+  canonical="https://www.sonical.ai/plugin-demo/"
+  eyebrow="Plugin demo"
+  heading='Any plugin, any time, <span class="acc">your call</span>'
+  nav=""
+  noindex={true}
+  ogImage="https://www.sonical.ai/video/sonical-plugin-demo-share.jpg"
+  centered={true}
+>
+  <p class="lede">
+    A walkthrough of downloading third-party audio plugins straight into a
+    Remora over Bluetooth, live, while the music keeps playing.
+  </p>
+
+  <div class="player">
+    <video
+      controls
+      playsinline
+      preload="metadata"
+      poster="/video/sonical-plugin-demo-poster.jpg"
+      width="1920"
+      height="1080"
+    >
+      <source src="/video/sonical-plugin-demo.mp4" type="video/mp4" />
+      <p class="fallback">
+        This browser cannot play the video.
+        <a href="/video/sonical-plugin-demo.mp4" download>Download it instead</a>.
+      </p>
+    </video>
+  </div>
+  <p class="runtime">3 min 47 sec</p>
+
+  <div class="ctarow">
+    <a class="btn btn-primary" href="/">Go to homepage →</a>
+  </div>
+</Page>
+
+<style>
+  /* The rounding goes on the <video> itself, NOT on a wrapper with
+     overflow:hidden. A clipping ancestor forces the browser off its hardware
+     video-overlay path and onto a masked software raster, which shows up as
+     the video going blocky while the page scrolls. See docs/intro-video.md. */
+  .player {
+    margin-top: 34px;
+    background: #000;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+  }
+  .player video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid rgba(192, 132, 252, .16);
+    border-radius: 16px;
+  }
+  .fallback {
+    padding: 24px;
+    color: #d3c2b4;
+  }
+  .fallback a { color: #ff9e00; }
+
+  .runtime {
+    margin-top: 12px;
+    color: #9c8878;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13.5px;
+    letter-spacing: .02em;
+  }
+</style>
